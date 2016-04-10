@@ -2,38 +2,68 @@
 using System.Collections;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using System.Collections.Generic;
+
+public enum Player
+{
+    Black,
+    White,
+    Nobody
+};
 
 public class GameController : MonoBehaviour {
     public Board board;
-    public Piece[] pieces;
     public GameObject mainMenu;
     public Dropdown colorSelector;
     public Dropdown difficultySelector;
     public EventSystem eventSystem;
+    public Player human;
+    public Player ai;
 
     private int difficulty;
-    private string playerColor;
+    private List<Square> squares;
 
     void Start()
+    {
+        // TODO
+    }
+
+    void Update()
+    {
+        if (mainMenu.activeSelf) UseMenu();
+        else PlayGame();
+    }
+
+    void PlayGame()
     {
 
     }
 
-    void Update()
+    void UseMenu()
     {
         GameObject currentSelection = eventSystem.currentSelectedGameObject;
         if (currentSelection == GameObject.Find("Play Button"))
         {
             mainMenu.SetActive(false);
             difficulty = difficultySelector.value + 1;
-            if (colorSelector.value == 0) playerColor = "black";
-            else playerColor = "white";
-            Debug.Log(playerColor);
+            if (colorSelector.value == 0)
+            {
+                human = Player.Black;
+                ai = Player.White;
+            }
+            else
+            {
+                human = Player.White;
+                ai = Player.Black;
+            }
+            board.SetInitialBoard();
         }
     }
 
-    void DeterminePlacementCoordinates()
+    public Square CreateSquare(int index)
     {
-
+        Square s = this.gameObject.AddComponent<Square>();
+        s.index = index;
+        return s;
     }
 }

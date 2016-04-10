@@ -2,14 +2,9 @@
 using System.Collections;
 
 public class Square : MonoBehaviour {
-
-	// Use this for initialization
-	void Start () {
-	
-	}
-	
-	// Update is called once per frame
-	void Update () {
-	
-	}
+    public Player player;
+    public bool isLegalMove;
+    public int index;
+    public int row;
+    public int column;
 }
