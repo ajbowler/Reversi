@@ -22,10 +22,12 @@ public class GameController : MonoBehaviour {
 
     private int difficulty;
     private Player turn;
+    private HashSet<int> flippedPieces;
 
     void Start()
     {
         turn = Player.Black;
+        flippedPieces = new HashSet<int>();
     }
 
     void Update()
@@ -36,11 +38,11 @@ public class GameController : MonoBehaviour {
 
     IEnumerator PlayGame()
     {
-        if (!UpdateLegalMoves(turn))
+        if (board.legalMoves.Count == 0)
             Debug.Log("Game Over");
         else
         {
-            UpdateSquares();
+            UpdateSquareDisplays();
             if (turn == human)
             {
                 if (Input.GetMouseButtonUp(0))
@@ -48,8 +50,8 @@ public class GameController : MonoBehaviour {
                     int clickedSquare = GetClickedSquare();
                     if (clickedSquare > -1)
                     {
+                        MakeMove(clickedSquare);
                         // TODO make move
-                        Debug.Log(clickedSquare);
                     }
                 }
                 while (turn == human) yield return null;
@@ -85,7 +87,19 @@ public class GameController : MonoBehaviour {
         }
     }
 
-    public bool UpdateLegalMoves(Player currentPlayer)
+    void MakeMove(int position)
+    {
+        if (board.squares[position].isLegalMove)
+        {
+            Debug.Log("Legal");
+        }
+        else
+        {
+            Debug.Log("Illegal");
+        }
+    }
+
+    public void UpdateLegalMoves(Player currentPlayer)
     {
         List<int> indicesToFlip = new List<int>();
         foreach (Square s in board.squares)
@@ -102,11 +116,9 @@ public class GameController : MonoBehaviour {
                 CheckPath(indicesToFlip, currentPlayer, s.position, 7);
             }
         }
-
-        return board.legalMoves.Count > 0;
     }
 
-    public void UpdateSquares()
+    public void UpdateSquareDisplays()
     {
         foreach (Square s in board.squares)
         {
@@ -120,18 +132,17 @@ public class GameController : MonoBehaviour {
     private void CheckPath(List<int> indicesToFlip, Player player, int startingPosition, int difference)
     {
         bool flankablesExist = false;
-        List<int> flippedTiles = new List<int>();
 
         for (int i = startingPosition + difference; i >= 0 && i <= 63; i += difference)
         {
             if (board.squares[i].player != player && board.squares[i].player != Player.Nobody)
             {
                 flankablesExist = true;
-                flippedTiles.Add(i);
+                flippedPieces.Add(i);
             }
             else if (board.squares[i].player == Player.Nobody && flankablesExist)
             {
-                flippedTiles.Add(i);
+                flippedPieces.Add(i);
                 board.legalMoves.Add(i);
                 board.squares[i].isLegalMove = true;
                 break;

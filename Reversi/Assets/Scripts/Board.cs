@@ -29,6 +29,7 @@ public class Board : MonoBehaviour {
         InitializeTile(28, Player.White);
         InitializeTile(35, Player.White);
         InitializeTile(36, Player.Black);
+        gameController.UpdateLegalMoves(Player.Black);
     }
 
     Vector3 DeterminePlacementCoordinates(int position)
