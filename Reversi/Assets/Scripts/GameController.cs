@@ -42,7 +42,19 @@ public class GameController : MonoBehaviour {
         {
             UpdateSquares();
             if (turn == human)
+            {
+                if (Input.GetMouseButtonUp(0))
+                {
+                    int clickedSquare = GetClickedSquare();
+                    if (clickedSquare > -1)
+                    {
+                        // TODO make move
+                        Debug.Log(clickedSquare);
+                    }
+                }
                 while (turn == human) yield return null;
+            }
+
             else yield return StartCoroutine(AITurn());
         }
     }
@@ -126,5 +138,17 @@ public class GameController : MonoBehaviour {
             }
             else break; // we can't go this way
         }
+    }
+
+    private int GetClickedSquare()
+    {
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        RaycastHit hit;
+        if (Physics.Raycast(ray, out hit, 100))
+        {
+            Square s = hit.transform.gameObject.GetComponent<Square>();
+            return s.position;
+        }
+        else return -1;
     }
 }
