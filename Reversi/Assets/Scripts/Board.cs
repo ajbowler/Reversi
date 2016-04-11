@@ -4,8 +4,8 @@ using System.Collections.Generic;
 
 public class Board : MonoBehaviour {
     public GameController gameController;
-    public Square square;
-    public Piece piece;
+    public Square squarePrefab;
+    public Piece piecePrefab;
     public List<Square> squares;
     public List<Piece> pieces;
     public List<int> legalMoves;
@@ -33,6 +33,13 @@ public class Board : MonoBehaviour {
         gameController.UpdateLegalMoves(Player.Black);
     }
 
+    public void CaptureTile(Player player, int position)
+    {
+        squares[position].isLegalMove = false;
+        squares[position].player = player;
+        PlacePiece(squares[position]);
+    }
+
     Vector3 DeterminePlacementCoordinates(int position)
     {
         int row = position / 8;
@@ -47,17 +54,17 @@ public class Board : MonoBehaviour {
     void PlacePiece(Square s)
     {
         if (s.player == Player.White)
-            Instantiate(piece, s.transform.position, Quaternion.identity);
+            Instantiate(piecePrefab, s.transform.position, Quaternion.identity);
         else
-            Instantiate(piece, s.transform.position, Quaternion.AngleAxis(180f, Vector3.right));
-        pieces.Add(piece);
+            Instantiate(piecePrefab, s.transform.position, Quaternion.AngleAxis(180f, Vector3.right));
+        pieces.Add(piecePrefab);
     }
 
     void InitializeTile(int position, Player player)
     {
         Vector3 squarePos = DeterminePlacementCoordinates(position);
         squarePos.y += .2f;
-        Square s = Instantiate(square, squarePos, Quaternion.identity) as Square;
+        Square s = Instantiate(squarePrefab, squarePos, Quaternion.identity) as Square;
         s.gameObject.GetComponent<MeshRenderer>().enabled = false;
         s.player = player;
         s.position = position;

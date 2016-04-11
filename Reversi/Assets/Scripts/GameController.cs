@@ -21,12 +21,12 @@ public class GameController : MonoBehaviour {
     public Player ai;
 
     private int difficulty;
-    private Player turn;
+    private Player ply;
     private HashSet<int> flippedPieces;
 
     void Start()
     {
-        turn = Player.Black;
+        ply = Player.Black;
         flippedPieces = new HashSet<int>();
     }
 
@@ -43,7 +43,7 @@ public class GameController : MonoBehaviour {
         else
         {
             UpdateSquareDisplays();
-            if (turn == human)
+            if (ply == human)
             {
                 if (Input.GetMouseButtonUp(0))
                 {
@@ -54,7 +54,7 @@ public class GameController : MonoBehaviour {
                         // TODO make move
                     }
                 }
-                while (turn == human) yield return null;
+                while (ply == human) yield return null;
             }
 
             else yield return StartCoroutine(AITurn());
@@ -63,7 +63,7 @@ public class GameController : MonoBehaviour {
 
     IEnumerator AITurn()
     {
-        while (turn == ai) yield return null; // TODO
+        while (ply == ai) yield return null; // TODO
     }
 
     void UseMenu()
@@ -85,7 +85,7 @@ public class GameController : MonoBehaviour {
                 ai = Player.Black;
             }
             board.SetInitialBoard();
-            SetTurn(Player.Black);
+            SetPly(Player.Black);
         }
     }
 
@@ -93,16 +93,16 @@ public class GameController : MonoBehaviour {
     {
         if (board.squares[position].isLegalMove)
         {
-            Debug.Log("Legal"); // TODO
+            board.CaptureTile(ply, position);
         }
-        if (turn == human) SetTurn(ai);
-        else SetTurn(human);
+        if (ply == human) SetPly(ai);
+        else SetPly(human);
     }
 
-    void SetTurn(Player player)
+    void SetPly(Player player)
     {
-        turn = player;
-        UpdateLegalMoves(turn);
+        ply = player;
+        UpdateLegalMoves(ply);
     }
 
     public void UpdateLegalMoves(Player currentPlayer)
