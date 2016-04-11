@@ -8,8 +8,7 @@ public class Board : MonoBehaviour {
     public Piece piece;
     public List<Square> squares;
     public List<Piece> pieces;
-
-    private List<int> legalMoves;
+    public List<int> legalMoves;
 
     void Start()
     {
@@ -64,60 +63,5 @@ public class Board : MonoBehaviour {
         if (player != Player.Nobody)
             PlacePiece(s);
         squares.Add(s);
-    }
-
-    public bool UpdateLegalMoves(Player currentPlayer)
-    {
-        List<int> indicesToFlip = new List<int>();
-        foreach (Square s in squares)
-        {
-            if (s.player == currentPlayer)
-            {
-                CheckPath(indicesToFlip, currentPlayer, s.position, -1);
-                CheckPath(indicesToFlip, currentPlayer, s.position, 1);
-                CheckPath(indicesToFlip, currentPlayer, s.position, -8);
-                CheckPath(indicesToFlip, currentPlayer, s.position, 8);
-                CheckPath(indicesToFlip, currentPlayer, s.position, -9);
-                CheckPath(indicesToFlip, currentPlayer, s.position, 9);
-                CheckPath(indicesToFlip, currentPlayer, s.position, -7);
-                CheckPath(indicesToFlip, currentPlayer, s.position, 7);
-            }
-        }
-
-        return legalMoves.Count > 0;
-    }
-
-    public void UpdateSquares()
-    {
-        foreach (Square s in squares)
-        {
-            if (s.isLegalMove)
-                s.gameObject.GetComponent<MeshRenderer>().enabled = true;
-            else
-                s.gameObject.GetComponent<MeshRenderer>().enabled = false;
-        }
-    }
-
-    private void CheckPath(List<int> indicesToFlip, Player player, int startingPosition, int difference)
-    {
-        bool flankablesExist = false;
-        List<int> flippedTiles = new List<int>();
-
-        for (int i = startingPosition + difference; i >= 0 && i <= 63; i += difference)
-        {
-            if (squares[i].player != player && squares[i].player != Player.Nobody)
-            {
-                flankablesExist = true;
-                flippedTiles.Add(i);
-            }
-            else if (squares[i].player == Player.Nobody && flankablesExist)
-            {
-                flippedTiles.Add(i);
-                legalMoves.Add(i);
-                squares[i].isLegalMove = true;
-                break;
-            }
-            else break; // we can't go this way
-        }
     }
 }
