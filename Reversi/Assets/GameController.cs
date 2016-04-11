@@ -59,11 +59,4 @@ public class GameController : MonoBehaviour {
             board.SetInitialBoard();
         }
     }
-
-    public Square CreateSquare(int index)
-    {
-        Square s = this.gameObject.AddComponent<Square>();
-        s.index = index;
-        return s;
-    }
 }

@@ -6,8 +6,8 @@ public class Board : MonoBehaviour {
     public GameController gameController;
     public Square square;
     public Piece piece;
-    private List<Square> squares = new List<Square>();
-    private List<Piece> pieces = new List<Piece>();
+    public List<Square> squares = new List<Square>();
+    public List<Piece> pieces = new List<Piece>();
 
     public void SetInitialBoard()
     {
@@ -17,33 +17,37 @@ public class Board : MonoBehaviour {
         InitializeTile(36, Player.Black);
     }
 
-    Vector3 DeterminePlacementCoordinates(Square square)
+    Vector3 DeterminePlacementCoordinates(int position)
     {
-        int row = square.index / 8;
-        int col = square.index % 8;
-        square.row = row;
-        square.column = col;
+        int row = position / 8;
+        int col = position % 8;
 
         float x = row - 3.5f;
         float z = col - 3.5f;
 
-        return new Vector3(x, 1f, z); // TODO
+        return new Vector3(x, 1f, z);
     }
 
-    void PlacePiece(Square square)
+    void PlacePiece(Square s)
     {
-        if (square.player == Player.White)
-            Instantiate(piece, DeterminePlacementCoordinates(square), Quaternion.identity);
+        if (s.player == Player.White)
+            Instantiate(piece, s.transform.position, Quaternion.identity);
         else
-            Instantiate(piece, DeterminePlacementCoordinates(square), Quaternion.AngleAxis(180f, Vector3.right));
+            Instantiate(piece, s.transform.position, Quaternion.AngleAxis(180f, Vector3.right));
+        s.gameObject.GetComponent<MeshRenderer>().enabled = false;
         pieces.Add(piece);
     }
 
     void InitializeTile(int position, Player player)
     {
-        Square s = gameController.CreateSquare(position);
-        squares.Add(s);
+        Square s = Instantiate(square, DeterminePlacementCoordinates(position), Quaternion.identity) as Square;
         s.player = player;
-        PlacePiece(s);
+        if (player != Player.Nobody)
+            PlacePiece(s);
+        else
+        {
+            // TODO
+        }
+        squares.Add(s);
     }
 }
