@@ -19,6 +19,7 @@ public class Board : MonoBehaviour {
 
     public void SetInitialBoard()
     {
+        this.gameObject.SetActive(true);
         for (int i = 0; i < 64; i++)
         {
             if (i == 27 || i == 36) InitializeTile(i, Player.Black);

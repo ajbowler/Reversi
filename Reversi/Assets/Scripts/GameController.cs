@@ -48,7 +48,7 @@ public class GameController : MonoBehaviour {
                 if (Input.GetMouseButtonUp(0))
                 {
                     int clickedSquare = GetClickedSquare();
-                    if (clickedSquare > -1)
+                    if (clickedSquare > -1 && board.squares[clickedSquare].isLegalMove)
                     {
                         MakeMove(clickedSquare);
                         // TODO make move
@@ -69,7 +69,8 @@ public class GameController : MonoBehaviour {
     void UseMenu()
     {
         GameObject currentSelection = eventSystem.currentSelectedGameObject;
-        if (currentSelection == GameObject.Find("Play Button"))
+        board.gameObject.SetActive(false);
+        if (Input.GetKeyUp(KeyCode.Return))
         {
             mainMenu.SetActive(false);
             difficulty = difficultySelector.value + 1;
@@ -84,6 +85,7 @@ public class GameController : MonoBehaviour {
                 ai = Player.Black;
             }
             board.SetInitialBoard();
+            SetTurn(Player.Black);
         }
     }
 
@@ -91,16 +93,22 @@ public class GameController : MonoBehaviour {
     {
         if (board.squares[position].isLegalMove)
         {
-            Debug.Log("Legal");
+            Debug.Log("Legal"); // TODO
         }
-        else
-        {
-            Debug.Log("Illegal");
-        }
+        if (turn == human) SetTurn(ai);
+        else SetTurn(human);
+    }
+
+    void SetTurn(Player player)
+    {
+        turn = player;
+        UpdateLegalMoves(turn);
     }
 
     public void UpdateLegalMoves(Player currentPlayer)
     {
+        if (board.legalMoves.Count > 0)
+            ResetLegalMoves();
         List<int> indicesToFlip = new List<int>();
         foreach (Square s in board.squares)
         {
@@ -161,5 +169,16 @@ public class GameController : MonoBehaviour {
             return s.position;
         }
         else return -1;
+    }
+
+    private void ResetLegalMoves()
+    {
+        foreach (Square s in board.squares)
+        {
+            if (s.isLegalMove)
+                s.isLegalMove = false;
+        }
+
+        board.legalMoves.Clear();
     }
 }
