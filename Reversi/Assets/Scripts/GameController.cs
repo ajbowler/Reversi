@@ -21,11 +21,11 @@ public class GameController : MonoBehaviour {
     public Player ai;
 
     private int difficulty;
-    private List<Square> squares;
+    private Player turn;
 
     void Start()
     {
-        // TODO
+        turn = Player.Black;
     }
 
     void Update()
@@ -34,9 +34,19 @@ public class GameController : MonoBehaviour {
         else PlayGame();
     }
 
-    void PlayGame()
+    IEnumerator PlayGame()
     {
+        if (turn == human)
+            while (turn == human) yield return null;
+        else yield return StartCoroutine(AITurn());
+    }
 
+    IEnumerator AITurn()
+    {
+        while (turn == ai)
+        {
+            yield return null;
+        }
     }
 
     void UseMenu()
