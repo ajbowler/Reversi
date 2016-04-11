@@ -31,22 +31,25 @@ public class GameController : MonoBehaviour {
     void Update()
     {
         if (mainMenu.activeSelf) UseMenu();
-        else PlayGame();
+        else StartCoroutine(PlayGame());
     }
 
     IEnumerator PlayGame()
     {
-        if (turn == human)
-            while (turn == human) yield return null;
-        else yield return StartCoroutine(AITurn());
+        if (!board.UpdateLegalMoves(turn))
+            Debug.Log("Game Over");
+        else
+        {
+            board.UpdateSquares();
+            if (turn == human)
+                while (turn == human) yield return null;
+            else yield return StartCoroutine(AITurn());
+        }
     }
 
     IEnumerator AITurn()
     {
-        while (turn == ai)
-        {
-            yield return null;
-        }
+        while (turn == ai) yield return null; // TODO
     }
 
     void UseMenu()
