@@ -26,10 +26,6 @@ public class Board : MonoBehaviour {
             else if (i == 28 || i == 35) InitializeTile(i, Player.White);
             else InitializeTile(i, Player.Nobody);
         }
-        InitializeTile(27, Player.Black);
-        InitializeTile(28, Player.White);
-        InitializeTile(35, Player.White);
-        InitializeTile(36, Player.Black);
     }
 
     public void CaptureTile(Player player, int position)
