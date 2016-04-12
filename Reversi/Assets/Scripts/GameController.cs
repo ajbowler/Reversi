@@ -41,18 +41,27 @@ public class GameController : MonoBehaviour {
         else
         {
             UpdateSquareDisplays();
-            if (ply == human)
-            {
-                if (Input.GetMouseButtonUp(0))
-                {
-                    int clickedSquare = GetClickedSquare();
-                    if (clickedSquare > -1 && board.squares[clickedSquare].isLegalMove)
-                        MakeMove(clickedSquare);
-                }
-                while (ply == human) yield return null;
-            }
+            //if (ply == human)
+            //{
+            //    if (Input.GetMouseButtonUp(0))
+            //    {
+            //        int clickedSquare = GetClickedSquare();
+            //        if (clickedSquare > -1 && board.squares[clickedSquare].isLegalMove)
+            //            MakeMove(clickedSquare);
+            //    }
+            //    while (ply == human) yield return null;
+            //}
 
-            else yield return StartCoroutine(AITurn());
+            // TESTING PIECE PLACEMENT AND FLIPPING
+            if (Input.GetMouseButtonUp(0))
+            {
+                int clickedSquare = GetClickedSquare();
+                if (clickedSquare > -1 && board.squares[clickedSquare].isLegalMove)
+                    MakeMove(clickedSquare);
+            }
+            while (ply == human) yield return null;
+
+            //else yield return StartCoroutine(AITurn());
         }
     }
 
