@@ -30,7 +30,6 @@ public class Board : MonoBehaviour {
         InitializeTile(28, Player.White);
         InitializeTile(35, Player.White);
         InitializeTile(36, Player.Black);
-        gameController.UpdateLegalMoves(Player.Black);
     }
 
     public void CaptureTile(Player player, int position)
@@ -38,6 +37,11 @@ public class Board : MonoBehaviour {
         squares[position].isLegalMove = false;
         squares[position].player = player;
         PlacePiece(squares[position]);
+    }
+
+    public void FlipPiece(Player player, int position)
+    {
+        CaptureTile(player, position);
     }
 
     Vector3 DeterminePlacementCoordinates(int position)
@@ -53,6 +57,8 @@ public class Board : MonoBehaviour {
 
     void PlacePiece(Square s)
     {
+        Vector3 position = s.transform.position;
+        position.y = 1f;
         if (s.player == Player.White)
             Instantiate(piecePrefab, s.transform.position, Quaternion.identity);
         else
