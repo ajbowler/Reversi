@@ -28,21 +28,21 @@ public class Board : MonoBehaviour {
         }
     }
 
-    public void CaptureTile(Player player, int position)
+    public void CaptureTile(Player player, Square square)
     {
-        squares[position].isLegalMove = false;
-        squares[position].player = player;
+        squares[square.position].isLegalMove = false;
+        squares[square.position].player = player;
         Piece existingPiece;
-        if (pieces.TryGetValue(position, out existingPiece))
-            pieces[position].gameObject.transform.Rotate(180f, 0f, 0f);
+        if (pieces.TryGetValue(square.position, out existingPiece))
+            pieces[square.position].gameObject.transform.Rotate(180f, 0f, 0f);
         else
-            PlacePiece(squares[position]);
+            PlacePiece(squares[square.position]);
 
     }
 
-    public void FlipPiece(Player player, int position)
+    public void FlipPiece(Player player, Square square)
     {
-        CaptureTile(player, position);
+        CaptureTile(player, square);
     }
 
     Vector3 DeterminePlacementCoordinates(int position)
@@ -76,6 +76,8 @@ public class Board : MonoBehaviour {
         s.gameObject.GetComponent<MeshRenderer>().enabled = false;
         s.player = player;
         s.position = position;
+        s.row = position % 8;
+        s.column = position / 8;
         s.isLegalMove = false;
         if (player != Player.Nobody)
             PlacePiece(s);

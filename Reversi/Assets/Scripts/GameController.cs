@@ -57,7 +57,7 @@ public class GameController : MonoBehaviour {
             {
                 int clickedSquare = GetClickedSquare();
                 if (clickedSquare > -1 && board.squares[clickedSquare].isLegalMove)
-                    MakeMove(clickedSquare);
+                    MakeMove(board.squares[clickedSquare]);
             }
             while (ply == human) yield return null;
 
@@ -93,12 +93,12 @@ public class GameController : MonoBehaviour {
         }
     }
 
-    void MakeMove(int position)
+    void MakeMove(Square square)
     {
-        if (board.squares[position].isLegalMove)
+        if (square.isLegalMove)
         {
-            board.CaptureTile(ply, position);
-            FlankPieces(ply, position);
+            board.CaptureTile(ply, square);
+            FlankPieces(ply, square);
         }
         if (ply == human) SetPly(ai);
         else SetPly(human);
@@ -110,38 +110,38 @@ public class GameController : MonoBehaviour {
         UpdateLegalMoves(ply);
     }
 
-    public void FlankPieces(Player currentPlayer, int position)
+    public void FlankPieces(Player currentPlayer, Square square)
     {
         List<int> flankedPieces = new List<int>();
-        flankedPieces.AddRange(AddFlankedPieces(currentPlayer, position, -1));
-        flankedPieces.AddRange(AddFlankedPieces(currentPlayer, position, 1));
-        flankedPieces.AddRange(AddFlankedPieces(currentPlayer, position, -8));
-        flankedPieces.AddRange(AddFlankedPieces(currentPlayer, position, 8));
-        flankedPieces.AddRange(AddFlankedPieces(currentPlayer, position, -9));
-        flankedPieces.AddRange(AddFlankedPieces(currentPlayer, position, 9));
-        flankedPieces.AddRange(AddFlankedPieces(currentPlayer, position, -7));
-        flankedPieces.AddRange(AddFlankedPieces(currentPlayer, position, 7));
+        flankedPieces.AddRange(AddFlankedPieces(currentPlayer, square, -1));
+        flankedPieces.AddRange(AddFlankedPieces(currentPlayer, square, 1));
+        flankedPieces.AddRange(AddFlankedPieces(currentPlayer, square, -8));
+        flankedPieces.AddRange(AddFlankedPieces(currentPlayer, square, 8));
+        flankedPieces.AddRange(AddFlankedPieces(currentPlayer, square, -9));
+        flankedPieces.AddRange(AddFlankedPieces(currentPlayer, square, 9));
+        flankedPieces.AddRange(AddFlankedPieces(currentPlayer, square, -7));
+        flankedPieces.AddRange(AddFlankedPieces(currentPlayer, square, 7));
 
         foreach (int piecePos in flankedPieces)
-            board.FlipPiece(currentPlayer, piecePos);
+            board.FlipPiece(currentPlayer, board.squares[piecePos]);
     }
 
     public void UpdateLegalMoves(Player currentPlayer)
     {
         if (board.legalMoves.Count > 0)
             ResetLegalMoves();
-        foreach (Square s in board.squares)
+        foreach (Square square in board.squares)
         {
-            if (s.player == currentPlayer)
+            if (square.player == currentPlayer)
             {
-                AddLegalMove(GetLegalMoveOnPath(currentPlayer, s.position, -1));
-                AddLegalMove(GetLegalMoveOnPath(currentPlayer, s.position, 1));
-                AddLegalMove(GetLegalMoveOnPath(currentPlayer, s.position, -8));
-                AddLegalMove(GetLegalMoveOnPath(currentPlayer, s.position, 8));
-                AddLegalMove(GetLegalMoveOnPath(currentPlayer, s.position, -9));
-                AddLegalMove(GetLegalMoveOnPath(currentPlayer, s.position, 9));
-                AddLegalMove(GetLegalMoveOnPath(currentPlayer, s.position, -7));
-                AddLegalMove(GetLegalMoveOnPath(currentPlayer, s.position, 7));
+                AddLegalMove(GetLegalMoveOnPath(currentPlayer, square, -1));
+                AddLegalMove(GetLegalMoveOnPath(currentPlayer, square, 1));
+                AddLegalMove(GetLegalMoveOnPath(currentPlayer, square, -8));
+                AddLegalMove(GetLegalMoveOnPath(currentPlayer, square, 8));
+                AddLegalMove(GetLegalMoveOnPath(currentPlayer, square, -9));
+                AddLegalMove(GetLegalMoveOnPath(currentPlayer, square, 9));
+                AddLegalMove(GetLegalMoveOnPath(currentPlayer, square, -7));
+                AddLegalMove(GetLegalMoveOnPath(currentPlayer, square, 7));
             }
         }
     }
@@ -157,11 +157,11 @@ public class GameController : MonoBehaviour {
         }
     }
 
-    private List<int> AddFlankedPieces(Player currentPlayer, int startingPosition, int direction)
+    private List<int> AddFlankedPieces(Player currentPlayer, Square square, int direction)
     {
         List<int> flankedPieces = new List<int>();
 
-        for (int i = startingPosition + direction; i >= 0 && i <= 63; i += direction)
+        for (int i = square.position + direction; i >= 0 && i <= 63; i += direction)
         {
             if (board.squares[i].player != currentPlayer && board.squares[i].player != Player.Nobody)
                 flankedPieces.Add(i);
@@ -177,11 +177,11 @@ public class GameController : MonoBehaviour {
         return flankedPieces;
     }
 
-    private int GetLegalMoveOnPath(Player player, int startingPosition, int direction)
+    private int GetLegalMoveOnPath(Player player, Square square, int direction)
     {
         bool flankablesExist = false;
 
-        for (int i = startingPosition + direction; i >= 0 && i <= 63; i += direction)
+        for (int i = square.position + direction; i >= 0 && i <= 63; i += direction)
         {
             if (board.squares[i].player != player && board.squares[i].player != Player.Nobody)
                 flankablesExist = true;
