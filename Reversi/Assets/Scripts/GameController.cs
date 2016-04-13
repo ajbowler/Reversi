@@ -15,6 +15,8 @@ public class GameController : MonoBehaviour {
     public Board board;
     public GameObject mainMenu;
     public GameObject gameOverMenu;
+    public Text blackScoreText;
+    public Text whiteScoreText;
     public Dropdown colorSelector;
     public Dropdown difficultySelector;
     public EventSystem eventSystem;
@@ -22,6 +24,8 @@ public class GameController : MonoBehaviour {
     public Player ai;
 
     private int difficulty;
+    private int blackScore;
+    private int whiteScore;
     private Player ply;
 
     void Start()
@@ -42,6 +46,7 @@ public class GameController : MonoBehaviour {
         else
         {
             UpdateSquareDisplays();
+            UpdateScore();
             //if (ply == human)
             //{
             //    if (Input.GetMouseButtonUp(0))
@@ -89,6 +94,8 @@ public class GameController : MonoBehaviour {
                 ai = Player.Black;
             }
             board.SetInitialBoard();
+            blackScoreText.gameObject.SetActive(true);
+            whiteScoreText.gameObject.SetActive(true);
             SetPly(Player.Black);
         }
     }
@@ -120,6 +127,22 @@ public class GameController : MonoBehaviour {
     {
         ply = player;
         UpdateLegalMoves(ply);
+    }
+
+    void UpdateScore()
+    {
+        blackScore = 0;
+        whiteScore = 0;
+        foreach (Square square in board.squares)
+        {
+            if (square.player == Player.Black)
+                blackScore++;
+            if (square.player == Player.White)
+                whiteScore++;
+        }
+
+        blackScoreText.text = "Black: " + blackScore;
+        whiteScoreText.text = "White: " + whiteScore;
     }
 
     public void FlankPieces(Player currentPlayer, Square square)
