@@ -14,6 +14,7 @@ public enum Player
 public class GameController : MonoBehaviour {
     public Board board;
     public GameObject mainMenu;
+    public GameObject gameOverMenu;
     public Dropdown colorSelector;
     public Dropdown difficultySelector;
     public EventSystem eventSystem;
@@ -37,7 +38,7 @@ public class GameController : MonoBehaviour {
     IEnumerator PlayGame()
     {
         if (board.legalMoves.Count == 0)
-            Debug.Log("Game Over");
+            GameOver();
         else
         {
             UpdateSquareDisplays();
@@ -72,7 +73,6 @@ public class GameController : MonoBehaviour {
 
     void UseMenu()
     {
-        GameObject currentSelection = eventSystem.currentSelectedGameObject;
         board.gameObject.SetActive(false);
         if (Input.GetKeyUp(KeyCode.Return))
         {
@@ -90,6 +90,18 @@ public class GameController : MonoBehaviour {
             }
             board.SetInitialBoard();
             SetPly(Player.Black);
+        }
+    }
+
+    void GameOver()
+    {
+        board.gameObject.SetActive(false);
+        board.Reset();
+        gameOverMenu.gameObject.SetActive(true);
+        if (Input.GetKeyUp(KeyCode.R))
+        {
+            mainMenu.gameObject.SetActive(true);
+            gameOverMenu.gameObject.SetActive(false);
         }
     }
 
@@ -198,10 +210,8 @@ public class GameController : MonoBehaviour {
 
     private bool IsPastBoardEdge(Square start, Square end, int direction)
     {
-        if (direction > 0)
-            return (start.row - end.row) > 0;
-        else
-            return (start.row - end.row) < 0;
+        if (direction > 0) return (start.row - end.row) > 0;
+        else return (start.row - end.row) < 0;
     }
 
     private void AddLegalMove(int position)

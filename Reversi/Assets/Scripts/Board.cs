@@ -45,6 +45,19 @@ public class Board : MonoBehaviour {
         CaptureTile(player, square);
     }
 
+    public void Reset()
+    {
+        this.squares.Clear();
+        this.legalMoves.Clear();
+        this.pieces.Clear();
+        GameObject[] pieceObjects = GameObject.FindGameObjectsWithTag("Piece");
+        GameObject[] squareObjects = GameObject.FindGameObjectsWithTag("Square");
+        for (int i = 0; i < pieceObjects.Length; i++)
+            Destroy(pieceObjects[i]);
+        for (int i = 0; i < squareObjects.Length; i++)
+            Destroy(squareObjects[i]);
+    }
+
     Vector3 DeterminePlacementCoordinates(int position)
     {
         int row = position / 8;
