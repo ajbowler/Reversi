@@ -179,7 +179,7 @@ public class GameController : MonoBehaviour {
                 flankedPieces.Add(i);
             else if (board.squares[i].player == currentPlayer)
                 break; // we have flanked everything we can in this direction
-            else if (board.squares[i].player == Player.Nobody)
+            else if (board.squares[i].player == Player.Nobody || IsPastBoardEdge(square, board.squares[i], direction))
             {
                 flankedPieces.Clear();
                 break; // nothing here can be flanked
