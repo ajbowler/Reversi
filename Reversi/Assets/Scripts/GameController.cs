@@ -17,9 +17,9 @@ public class GameController : MonoBehaviour {
     public GameObject gameOverMenu;
     public Text blackScoreText;
     public Text whiteScoreText;
+    public Text winnerText;
     public Dropdown colorSelector;
     public Dropdown difficultySelector;
-    public EventSystem eventSystem;
     public Player human;
     public Player ai;
 
@@ -104,6 +104,14 @@ public class GameController : MonoBehaviour {
     {
         board.gameObject.SetActive(false);
         board.Reset();
+
+        if (blackScore > whiteScore)
+            winnerText.text = "Black Wins!";
+        else if (whiteScore > blackScore)
+            winnerText.text = "White Wins!";
+        else
+            winnerText.text = "Tie!";
+
         gameOverMenu.gameObject.SetActive(true);
         if (Input.GetKeyUp(KeyCode.R))
         {
