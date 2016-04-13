@@ -183,6 +183,9 @@ public class GameController : MonoBehaviour {
 
         for (int i = square.position + direction; i >= 0 && i <= 63; i += direction)
         {
+            // TODO establish rules for rows and columns
+            if (IsPastBoardEdge(square, board.squares[i], direction))
+                return -1; // we can't go this way
             if (board.squares[i].player != player && board.squares[i].player != Player.Nobody)
                 flankablesExist = true;
             else if (board.squares[i].player == Player.Nobody && flankablesExist)
@@ -191,6 +194,14 @@ public class GameController : MonoBehaviour {
         }
 
         return -1; // shouldn't be reached unless there is an indexing error
+    }
+
+    private bool IsPastBoardEdge(Square start, Square end, int direction)
+    {
+        if (direction > 0)
+            return (start.row - end.row) > 0;
+        else
+            return (start.row - end.row) < 0;
     }
 
     private void AddLegalMove(int position)
