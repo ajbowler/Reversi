@@ -14,13 +14,18 @@ public enum Player
 
 public class MinimaxPair<First, Second>
 {
-    public First first { get; set; }
-    public Second second { get; set; }
+    public First bestMove { get; set; }
+    public Second bestScore { get; set; }
 
-    public MinimaxPair(First first, Second second)
+    public MinimaxPair(First bestMove, Second bestScore)
     {
-        this.first = first;
-        this.second = second;
+        this.bestMove = bestMove;
+        this.bestScore = bestScore;
+    }
+
+    public MinimaxPair()
+    {
+
     }
 }
 
@@ -76,7 +81,11 @@ public class GameController : MonoBehaviour {
             {
                 int clickedSquare = GetClickedSquare();
                 if (clickedSquare > -1 && board.squares[clickedSquare].isLegalMove)
-                    MakeMove(board.squares[clickedSquare]);
+                {
+                    MakeMove(board, board.squares[clickedSquare]);
+                    if (ply == human) SetPly(ai);
+                    else SetPly(human);
+                }
             }
             while (ply == human) yield return null;
 
@@ -133,15 +142,13 @@ public class GameController : MonoBehaviour {
         }
     }
 
-    void MakeMove(Square square)
+    void MakeMove(Board board, Square square)
     {
         if (square.isLegalMove)
         {
             board.CaptureTile(ply, square);
-            FlankPieces(ply, square);
+            FlankPieces(board, ply, square);
         }
-        if (ply == human) SetPly(ai);
-        else SetPly(human);
     }
 
     void SetPly(Player player)
@@ -166,27 +173,55 @@ public class GameController : MonoBehaviour {
         whiteScoreText.text = "White: " + whiteScore;
     }
 
-    MinimaxPair<List<Square>, double> Minimax(Board board, Player currentPlayer, int depth)
+    MinimaxPair<Square[], double> Minimax(Square[] squares, Player currentPlayer, int depth, bool maximizingPlayer)
     {
-        if (board.legalMoves.Count == 0 || depth == difficulty)
-            return new MinimaxPair<List<Square>, double>(board.Evaluate(currentPlayer), Double.MaxValue);
+        List<Square> legalMoves = GetLegalMoves(squares);
+        if (legalMoves.Count == 0 || depth == 0)
+            return new MinimaxPair<Square[], double>(Evaluate(squares, currentPlayer), 0);
 
-        List<Square> bestMove = new List<Square>();
+        MinimaxPair<Square[], double> bestBoard = new MinimaxPair<Square[], double>();
+        Square[] bestMove = new Square[64];
         double bestScore;
-        if (currentPlayer == ai)
-            bestScore = -Mathf.Infinity;
-        else
-            bestScore = Mathf.Infinity;
 
-        foreach (Square legalMove in board.legalMoves)
+        if (maximizingPlayer)
         {
-
+            bestScore = Mathf.NegativeInfinity;
+            foreach (Square legalMove in legalMoves)
+            {
+                Board newBoard = CopyBoard();
+                MakeMove(newBoard, legalMove);
+                MinimaxPair<Square[], double> nextMove = Minimax(newBoard.squares, human, depth - 1, false);
+                if (nextMove.bestScore > bestScore)
+                {
+                    bestMove = nextMove.bestMove;
+                    bestScore = nextMove.bestScore;
+                    bestBoard.bestMove = bestMove;
+                    bestBoard.bestScore = bestScore;
+                }
+            }
+            return bestBoard;
         }
-
-        return null; // TODO
+        else
+        {
+            bestScore = Mathf.Infinity;
+            foreach (Square legalMove in legalMoves)
+            {
+                Board newBoard = CopyBoard();
+                MakeMove(newBoard, legalMove);
+                MinimaxPair<Square[], double> nextMove = Minimax(newBoard.squares, ai, depth - 1, true);
+                if (nextMove.bestScore < bestScore)
+                {
+                    bestMove = nextMove.bestMove;
+                    bestScore = nextMove.bestScore;
+                    bestBoard.bestMove = bestMove;
+                    bestBoard.bestScore = bestScore;
+                }
+            }
+            return bestBoard;
+        }
     }
 
-    public void FlankPieces(Player currentPlayer, Square square)
+    public void FlankPieces(Board board, Player currentPlayer, Square square)
     {
         List<int> flankedPieces = new List<int>();
         flankedPieces.AddRange(AddFlankedPieces(currentPlayer, square, -1));
@@ -253,6 +288,33 @@ public class GameController : MonoBehaviour {
         return flankedPieces;
     }
 
+    private Board CopyBoard()
+    {
+        Board newBoard = new Board();
+        newBoard.gameController = this;
+        newBoard.legalMoves = new List<Square>();
+        newBoard.squares = new Square[64];
+        newBoard.pieces = new Dictionary<int, Piece>();
+        foreach (Square square in board.squares)
+        {
+            Square s = CopySquare(square);
+            newBoard.squares[square.position] = s;
+            if (s.isLegalMove)
+                newBoard.legalMoves.Add(s);
+            if (s.player != Player.Nobody)
+                newBoard.CaptureTile(s.player, s);
+        }
+        return newBoard;
+    }
+
+    private List<Square> GetLegalMoves(Square[] squares)
+    {
+        List<Square> legalMoves = new List<Square>();
+        foreach (Square square in squares)
+            if (square.isLegalMove) legalMoves.Add(CopySquare(square));
+        return legalMoves;
+    }
+
     private Square GetLegalMoveOnPath(Player player, Square square, int direction)
     {
         bool flankablesExist = false;
@@ -269,6 +331,17 @@ public class GameController : MonoBehaviour {
         }
 
         return null; // shouldn't be reached unless there is an indexing error
+    }
+
+    private Square CopySquare(Square s)
+    {
+        Square square = new Square();
+        square.column = s.column;
+        square.isLegalMove = s.isLegalMove;
+        square.player = s.player;
+        square.position = s.position;
+        square.row = s.row;
+        return square;
     }
 
     private bool IsPastBoardEdge(Square start, Square end, int direction)
@@ -296,6 +369,11 @@ public class GameController : MonoBehaviour {
             return s.position;
         }
         else return -1;
+    }
+
+    private Square[] Evaluate(Square[] board, Player currentPlayer)
+    {
+        return null; // TODO
     }
 
     private void ResetLegalMoves()

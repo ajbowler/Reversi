@@ -1,18 +1,19 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System;
 
 public class Board : MonoBehaviour {
     public GameController gameController;
     public Square squarePrefab;
     public Piece piecePrefab;
-    public List<Square> squares;
+    public Square[] squares;
     public Dictionary<int, Piece> pieces;
     public List<Square> legalMoves;
 
     void Start()
     {
-        squares = new List<Square>();
+        squares = new Square[64];
         pieces = new Dictionary<int, Piece>();
         legalMoves = new List<Square>();
     }
@@ -47,7 +48,7 @@ public class Board : MonoBehaviour {
 
     public void Reset()
     {
-        this.squares.Clear();
+        this.squares = new Square[64];
         this.legalMoves.Clear();
         this.pieces.Clear();
         GameObject[] pieceObjects = GameObject.FindGameObjectsWithTag("Piece");
@@ -56,11 +57,6 @@ public class Board : MonoBehaviour {
             Destroy(pieceObjects[i]);
         for (int i = 0; i < squareObjects.Length; i++)
             Destroy(squareObjects[i]);
-    }
-
-    public List<Square> Evaluate(Player currentPlayer)
-    {
-        return new List<Square>(); // TODO
     }
 
     Vector3 DeterminePlacementCoordinates(int position)
@@ -99,6 +95,6 @@ public class Board : MonoBehaviour {
         s.isLegalMove = false;
         if (player != Player.Nobody)
             PlacePiece(s);
-        squares.Add(s);
+        squares[position] = s;
     }
 }
