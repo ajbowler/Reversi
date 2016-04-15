@@ -3,6 +3,7 @@ using System.Collections;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using System.Collections.Generic;
+using System;
 
 public enum Player
 {
@@ -10,6 +11,18 @@ public enum Player
     White,
     Nobody
 };
+
+public class MinimaxPair<First, Second>
+{
+    public First first { get; set; }
+    public Second second { get; set; }
+
+    public MinimaxPair(First first, Second second)
+    {
+        this.first = first;
+        this.second = second;
+    }
+}
 
 public class GameController : MonoBehaviour {
     public Board board;
@@ -153,6 +166,26 @@ public class GameController : MonoBehaviour {
         whiteScoreText.text = "White: " + whiteScore;
     }
 
+    MinimaxPair<List<Square>, double> Minimax(Board board, Player currentPlayer, int depth)
+    {
+        if (board.legalMoves.Count == 0 || depth == difficulty)
+            return new MinimaxPair<List<Square>, double>(board.Evaluate(currentPlayer), Double.MaxValue);
+
+        List<Square> bestMove = new List<Square>();
+        double bestScore;
+        if (currentPlayer == ai)
+            bestScore = -Mathf.Infinity;
+        else
+            bestScore = Mathf.Infinity;
+
+        foreach (Square legalMove in board.legalMoves)
+        {
+
+        }
+
+        return null; // TODO
+    }
+
     public void FlankPieces(Player currentPlayer, Square square)
     {
         List<int> flankedPieces = new List<int>();
@@ -220,23 +253,22 @@ public class GameController : MonoBehaviour {
         return flankedPieces;
     }
 
-    private int GetLegalMoveOnPath(Player player, Square square, int direction)
+    private Square GetLegalMoveOnPath(Player player, Square square, int direction)
     {
         bool flankablesExist = false;
 
         for (int i = square.position + direction; i >= 0 && i <= 63; i += direction)
         {
-            // TODO establish rules for rows and columns
             if (IsPastBoardEdge(square, board.squares[i], direction))
-                return -1; // we can't go this way
+                return null; // we can't go this way
             if (board.squares[i].player != player && board.squares[i].player != Player.Nobody)
                 flankablesExist = true;
             else if (board.squares[i].player == Player.Nobody && flankablesExist)
-                return i;
-            else return -1; // we can't go this way
+                return board.squares[i];
+            else return null; // we can't go this way
         }
 
-        return -1; // shouldn't be reached unless there is an indexing error
+        return null; // shouldn't be reached unless there is an indexing error
     }
 
     private bool IsPastBoardEdge(Square start, Square end, int direction)
@@ -245,12 +277,12 @@ public class GameController : MonoBehaviour {
         else return (start.row - end.row) < 0;
     }
 
-    private void AddLegalMove(int position)
+    private void AddLegalMove(Square square)
     {
-        if (position > -1)
+        if (square != null)
         {
-            board.legalMoves.Add(position);
-            board.squares[position].isLegalMove = true;
+            board.legalMoves.Add(square);
+            board.squares[square.position].isLegalMove = true;
         }
     }
 

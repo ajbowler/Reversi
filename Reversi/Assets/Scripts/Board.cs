@@ -8,13 +8,13 @@ public class Board : MonoBehaviour {
     public Piece piecePrefab;
     public List<Square> squares;
     public Dictionary<int, Piece> pieces;
-    public List<int> legalMoves;
+    public List<Square> legalMoves;
 
     void Start()
     {
         squares = new List<Square>();
         pieces = new Dictionary<int, Piece>();
-        legalMoves = new List<int>();
+        legalMoves = new List<Square>();
     }
 
     public void SetInitialBoard()
@@ -56,6 +56,11 @@ public class Board : MonoBehaviour {
             Destroy(pieceObjects[i]);
         for (int i = 0; i < squareObjects.Length; i++)
             Destroy(squareObjects[i]);
+    }
+
+    public List<Square> Evaluate(Player currentPlayer)
+    {
+        return new List<Square>(); // TODO
     }
 
     Vector3 DeterminePlacementCoordinates(int position)
