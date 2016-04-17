@@ -366,7 +366,8 @@ public class GameController : MonoBehaviour {
         if (Physics.Raycast(ray, out hit, 100))
         {
             Square s = hit.transform.gameObject.GetComponent<Square>();
-            return s.position;
+            if (s != null) return s.position;
+            else return -1;
         }
         else return -1;
     }
