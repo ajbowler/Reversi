@@ -180,41 +180,35 @@ public class GameController : MonoBehaviour {
             return new MinimaxPair<Square[], double>(Evaluate(squares, currentPlayer), 0);
 
         MinimaxPair<Square[], double> bestBoard = new MinimaxPair<Square[], double>();
-        Square[] bestMove = new Square[64];
-        double bestScore;
 
         if (maximizingPlayer)
         {
-            bestScore = Mathf.NegativeInfinity;
+            bestBoard.bestScore = Mathf.NegativeInfinity;
             foreach (Square legalMove in legalMoves)
             {
                 Board newBoard = CopyBoard();
                 MakeMove(newBoard, legalMove);
                 MinimaxPair<Square[], double> nextMove = Minimax(newBoard.squares, human, depth - 1, false);
-                if (nextMove.bestScore > bestScore)
+                if (nextMove.bestScore > bestBoard.bestScore)
                 {
-                    bestMove = nextMove.bestMove;
-                    bestScore = nextMove.bestScore;
-                    bestBoard.bestMove = bestMove;
-                    bestBoard.bestScore = bestScore;
+                    bestBoard.bestMove = nextMove.bestMove;
+                    bestBoard.bestScore = nextMove.bestScore;
                 }
             }
             return bestBoard;
         }
         else
         {
-            bestScore = Mathf.Infinity;
+            bestBoard.bestScore = Mathf.Infinity;
             foreach (Square legalMove in legalMoves)
             {
                 Board newBoard = CopyBoard();
                 MakeMove(newBoard, legalMove);
                 MinimaxPair<Square[], double> nextMove = Minimax(newBoard.squares, ai, depth - 1, true);
-                if (nextMove.bestScore < bestScore)
+                if (nextMove.bestScore < bestBoard.bestScore)
                 {
-                    bestMove = nextMove.bestMove;
-                    bestScore = nextMove.bestScore;
-                    bestBoard.bestMove = bestMove;
-                    bestBoard.bestScore = bestScore;
+                    bestBoard.bestMove = nextMove.bestMove;
+                    bestBoard.bestScore = nextMove.bestScore;
                 }
             }
             return bestBoard;
