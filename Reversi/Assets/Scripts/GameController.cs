@@ -177,7 +177,7 @@ public class GameController : MonoBehaviour {
     {
         List<Square> legalMoves = GetLegalMoves(squares);
         if (legalMoves.Count == 0 || depth == 0)
-            return new MinimaxPair<Square[], double>(Evaluate(squares, currentPlayer), 0);
+            return new MinimaxPair<Square[], double>(squares, Evaluate(squares));
 
         MinimaxPair<Square[], double> bestBoard = new MinimaxPair<Square[], double>();
 
@@ -366,9 +366,61 @@ public class GameController : MonoBehaviour {
         else return -1;
     }
 
-    private Square[] Evaluate(Square[] board, Player currentPlayer)
+    private double Evaluate(Square[] board)
     {
-        return null; // TODO
+        double score = 0.0f;
+        score += GetCornerScore(board);
+        score += GetEdgeScore(board);
+        score += GetPieceCountScore(board);
+
+        return score; // TODO
+    }
+
+    private double GetCornerScore(Square[] board)
+    {
+        int[] corners = new int[4] {0, 7, 56, 63 };
+        double score = 0.0f;
+        foreach (int corner in corners)
+        {
+            if (board[corner].player == ai)
+                score++;
+            else if (board[corner].player == human)
+                score--;
+        }
+
+        return score * 20;
+    }
+
+    private double GetEdgeScore(Square[] board)
+    {
+        double score = 0.0f;
+        for (int i = 0; i < 64; i++)
+        {
+            if (i % 8 == 0 || i % 8 == 7 || i / 8 == 0 || i / 8 == 7)
+            {
+                if (board[i].player == ai)
+                    score++;
+                else if (board[i].player == human)
+                    score--;
+            }
+        }
+
+        return score * 10;
+    }
+
+    private double GetPieceCountScore(Square[] board)
+    {
+        double score = 0.0f;
+
+        for (int i = 0; i < 64; i++)
+        {
+            if (board[i].player == ai)
+                score++;
+            else if (board[i].player == human)
+                score--;
+        }
+
+        return score;
     }
 
     private void ResetLegalMoves()
