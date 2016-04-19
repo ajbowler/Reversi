@@ -65,36 +65,34 @@ public class GameController : MonoBehaviour {
         {
             UpdateSquareDisplays();
             UpdateScore();
-            //if (ply == human)
-            //{
-            //    if (Input.GetMouseButtonUp(0))
-            //    {
-            //        int clickedSquare = GetClickedSquare();
-            //        if (clickedSquare > -1 && board.squares[clickedSquare].isLegalMove)
-            //            MakeMove(clickedSquare);
-            //    }
-            //    while (ply == human) yield return null;
-            //}
-
-            // TESTING PIECE PLACEMENT AND FLIPPING
-            if (Input.GetMouseButtonUp(0))
-            {
-                int clickedSquare = GetClickedSquare();
-                if (clickedSquare > -1 && board.squares[clickedSquare].isLegalMove)
-                {
-                    MakeMove(board, board.squares[clickedSquare]);
-                    if (ply == human) SetPly(ai);
-                    else SetPly(human);
-                }
-            }
-            while (ply == human) yield return null;
-
-            //else yield return StartCoroutine(AITurn());
+            if (ply == human) yield return StartCoroutine(HumanTurn());
+            else yield return StartCoroutine(AITurn());
         }
+    }
+
+    IEnumerator HumanTurn()
+    {
+        if (Input.GetMouseButtonUp(0))
+        {
+            int clickedSquare = GetClickedSquare();
+            if (clickedSquare > -1 && board.squares[clickedSquare].isLegalMove)
+            {
+                MakeMove(board, ply, board.squares[clickedSquare]);
+                if (ply == human) SetPly(ai);
+                else SetPly(human);
+            }
+        }
+        while (ply == human) yield return null;
     }
 
     IEnumerator AITurn()
     {
+        MinimaxPair<Square[], double> moveToMake = Minimax(board.squares, difficulty, true);
+        Square[] nextBoard = moveToMake.bestMove;
+
+        int movePos = GetNextMove(board.squares, nextBoard);
+        MakeMove(board, ply, board.squares[movePos]);
+
         while (ply == ai) yield return null; // TODO
     }
 
@@ -142,7 +140,7 @@ public class GameController : MonoBehaviour {
         }
     }
 
-    void MakeMove(Board board, Square square)
+    void MakeMove(Board board, Player ply, Square square)
     {
         if (square.isLegalMove)
         {
@@ -173,7 +171,7 @@ public class GameController : MonoBehaviour {
         whiteScoreText.text = "White: " + whiteScore;
     }
 
-    MinimaxPair<Square[], double> Minimax(Square[] squares, Player currentPlayer, int depth, bool maximizingPlayer)
+    MinimaxPair<Square[], double> Minimax(Square[] squares, int depth, bool maximizingPlayer)
     {
         List<Square> legalMoves = GetLegalMoves(squares);
         if (legalMoves.Count == 0 || depth == 0)
@@ -187,8 +185,8 @@ public class GameController : MonoBehaviour {
             foreach (Square legalMove in legalMoves)
             {
                 Board newBoard = CopyBoard();
-                MakeMove(newBoard, legalMove);
-                MinimaxPair<Square[], double> nextMove = Minimax(newBoard.squares, human, depth - 1, false);
+                MakeMove(newBoard, ply, legalMove);
+                MinimaxPair<Square[], double> nextMove = Minimax(newBoard.squares, depth - 1, false);
                 if (nextMove.bestScore > bestBoard.bestScore)
                 {
                     bestBoard.bestMove = nextMove.bestMove;
@@ -203,8 +201,8 @@ public class GameController : MonoBehaviour {
             foreach (Square legalMove in legalMoves)
             {
                 Board newBoard = CopyBoard();
-                MakeMove(newBoard, legalMove);
-                MinimaxPair<Square[], double> nextMove = Minimax(newBoard.squares, ai, depth - 1, true);
+                MakeMove(newBoard, ply, legalMove);
+                MinimaxPair<Square[], double> nextMove = Minimax(newBoard.squares, depth - 1, true);
                 if (nextMove.bestScore < bestBoard.bestScore)
                 {
                     bestBoard.bestMove = nextMove.bestMove;
@@ -329,7 +327,7 @@ public class GameController : MonoBehaviour {
 
     private Square CopySquare(Square s)
     {
-        Square square = new Square();
+        Square square = gameObject.AddComponent<Square>();
         square.column = s.column;
         square.isLegalMove = s.isLegalMove;
         square.player = s.player;
@@ -373,7 +371,7 @@ public class GameController : MonoBehaviour {
         score += GetEdgeScore(board);
         score += GetPieceCountScore(board);
 
-        return score; // TODO
+        return score;
     }
 
     private double GetCornerScore(Square[] board)
@@ -421,6 +419,18 @@ public class GameController : MonoBehaviour {
         }
 
         return score;
+    }
+
+    private int GetNextMove(Square[] currentBoard, Square[] nextBoard)
+    {
+        for (int i = 0; i < 64; i++)
+        {
+            if (currentBoard[i].player == Player.Nobody && nextBoard[i].player == ai)
+                return i;
+        }
+
+        Debug.Log("ERROR");
+        return -1;
     }
 
     private void ResetLegalMoves()
