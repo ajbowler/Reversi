@@ -29,7 +29,8 @@ public class MinimaxPair<First, Second>
     }
 }
 
-public class GameController : MonoBehaviour {
+public class GameController : MonoBehaviour
+{
     public Board board;
     public GameObject mainMenu;
     public GameObject gameOverMenu;
@@ -77,7 +78,7 @@ public class GameController : MonoBehaviour {
             int clickedSquare = GetClickedSquare();
             if (clickedSquare > -1 && board.squares[clickedSquare].isLegalMove)
             {
-                MakeMove(board, ply, board.squares[clickedSquare]);
+                MakeMove(board, ply, board.squares[clickedSquare], true);
                 if (ply == human) SetPly(ai);
                 else SetPly(human);
             }
@@ -91,7 +92,7 @@ public class GameController : MonoBehaviour {
         Square[] nextBoard = moveToMake.bestMove;
 
         int movePos = GetNextMove(board.squares, nextBoard);
-        MakeMove(board, ply, board.squares[movePos]);
+        MakeMove(board, ply, board.squares[movePos], true);
 
         while (ply == ai) yield return null; // TODO
     }
@@ -140,12 +141,12 @@ public class GameController : MonoBehaviour {
         }
     }
 
-    void MakeMove(Board board, Player ply, Square square)
+    void MakeMove(Board board, Player ply, Square square, bool isTrueBoard)
     {
         if (square.isLegalMove)
         {
-            board.CaptureTile(ply, square);
-            FlankPieces(board, ply, square);
+            board.CaptureTile(ply, square, isTrueBoard);
+            FlankPieces(board, ply, square, isTrueBoard);
         }
     }
 
@@ -185,7 +186,7 @@ public class GameController : MonoBehaviour {
             foreach (Square legalMove in legalMoves)
             {
                 Board newBoard = CopyBoard();
-                MakeMove(newBoard, ply, legalMove);
+                MakeMove(newBoard, ply, legalMove, false);
                 MinimaxPair<Square[], double> nextMove = Minimax(newBoard.squares, depth - 1, false);
                 if (nextMove.bestScore > bestBoard.bestScore)
                 {
@@ -201,7 +202,7 @@ public class GameController : MonoBehaviour {
             foreach (Square legalMove in legalMoves)
             {
                 Board newBoard = CopyBoard();
-                MakeMove(newBoard, ply, legalMove);
+                MakeMove(newBoard, ply, legalMove, false);
                 MinimaxPair<Square[], double> nextMove = Minimax(newBoard.squares, depth - 1, true);
                 if (nextMove.bestScore < bestBoard.bestScore)
                 {
@@ -213,7 +214,7 @@ public class GameController : MonoBehaviour {
         }
     }
 
-    public void FlankPieces(Board board, Player currentPlayer, Square square)
+    public void FlankPieces(Board board, Player currentPlayer, Square square, bool isTrueBoard)
     {
         List<int> flankedPieces = new List<int>();
         flankedPieces.AddRange(AddFlankedPieces(currentPlayer, square, -1));
@@ -225,8 +226,11 @@ public class GameController : MonoBehaviour {
         flankedPieces.AddRange(AddFlankedPieces(currentPlayer, square, -7));
         flankedPieces.AddRange(AddFlankedPieces(currentPlayer, square, 7));
 
-        foreach (int piecePos in flankedPieces)
-            board.FlipPiece(currentPlayer, board.squares[piecePos]);
+        if (isTrueBoard)
+        {
+            foreach (int piecePos in flankedPieces)
+                board.FlipPiece(currentPlayer, board.pieces[piecePos]);
+        }
     }
 
     public void UpdateLegalMoves(Player currentPlayer)
@@ -282,19 +286,14 @@ public class GameController : MonoBehaviour {
 
     private Board CopyBoard()
     {
-        Board newBoard = new Board();
+        Board newBoard = gameObject.AddComponent<Board>();
         newBoard.gameController = this;
         newBoard.legalMoves = new List<Square>();
-        newBoard.squares = new Square[64];
-        newBoard.pieces = new Dictionary<int, Piece>();
-        foreach (Square square in board.squares)
+        newBoard.squares = (Square[])board.squares.Clone();
+        for (int i = 0; i < 64; i++)
         {
-            Square s = CopySquare(square);
-            newBoard.squares[square.position] = s;
-            if (s.isLegalMove)
-                newBoard.legalMoves.Add(s);
-            if (s.player != Player.Nobody)
-                newBoard.CaptureTile(s.player, s);
+            if (newBoard.squares[i].isLegalMove)
+                newBoard.legalMoves.Add(newBoard.squares[i]);
         }
         return newBoard;
     }
@@ -376,7 +375,7 @@ public class GameController : MonoBehaviour {
 
     private double GetCornerScore(Square[] board)
     {
-        int[] corners = new int[4] {0, 7, 56, 63 };
+        int[] corners = new int[4] { 0, 7, 56, 63 };
         double score = 0.0f;
         foreach (int corner in corners)
         {

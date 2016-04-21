@@ -29,21 +29,24 @@ public class Board : MonoBehaviour {
         }
     }
 
-    public void CaptureTile(Player player, Square square)
+    public void CaptureTile(Player player, Square square, bool isTrueBoard)
     {
         squares[square.position].isLegalMove = false;
         squares[square.position].player = player;
-        Piece existingPiece;
-        if (pieces.TryGetValue(square.position, out existingPiece))
-            pieces[square.position].gameObject.transform.Rotate(180f, 0f, 0f);
-        else
-            PlacePiece(squares[square.position]);
+        if (isTrueBoard)
+        {
+            Piece existingPiece;
+            if (pieces.TryGetValue(square.position, out existingPiece))
+                pieces[square.position].gameObject.transform.Rotate(180f, 0f, 0f);
+            else
+                PlacePiece(squares[square.position]);
+        }
 
     }
 
-    public void FlipPiece(Player player, Square square)
+    public void FlipPiece(Player player, Piece piece)
     {
-        CaptureTile(player, square);
+        piece.gameObject.transform.Rotate(180f, 0f, 0f);
     }
 
     public void Reset()
@@ -70,7 +73,7 @@ public class Board : MonoBehaviour {
         return new Vector3(x, 1f, z);
     }
 
-    void PlacePiece(Square s)
+    public void PlacePiece(Square s)
     {
         Vector3 piecePosition = s.transform.position;
         piecePosition.y = 1f;
