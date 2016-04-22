@@ -3,19 +3,26 @@ using System.Collections;
 using System.Collections.Generic;
 using System;
 
+public enum Player
+{
+    Black,
+    White,
+    Nobody
+};
+
 public class Board : MonoBehaviour {
     public GameController gameController;
     public Square squarePrefab;
     public Piece piecePrefab;
     public Square[] squares;
+    public Player[] playerMap;
     public Dictionary<int, Piece> pieces;
-    public List<Square> legalMoves;
 
-    void Start()
+    public void Start()
     {
         squares = new Square[64];
         pieces = new Dictionary<int, Piece>();
-        legalMoves = new List<Square>();
+        playerMap = new Player[64];
     }
 
     public void SetInitialBoard()
@@ -29,19 +36,31 @@ public class Board : MonoBehaviour {
         }
     }
 
-    public void CaptureTile(Player player, Square square, bool isTrueBoard)
+    public void CaptureTile(Player player, Square square)
     {
         squares[square.position].isLegalMove = false;
-        squares[square.position].player = player;
-        if (isTrueBoard)
-        {
-            Piece existingPiece;
-            if (pieces.TryGetValue(square.position, out existingPiece))
-                pieces[square.position].gameObject.transform.Rotate(180f, 0f, 0f);
-            else
-                PlacePiece(squares[square.position]);
-        }
+        playerMap[square.position] = player;
+        Piece existingPiece;
+        if (pieces.TryGetValue(square.position, out existingPiece))
+            pieces[square.position].gameObject.transform.Rotate(180f, 0f, 0f);
+        else
+            PlacePiece(squares[square.position]);
+    }
 
+    public void FlankPieces(Player currentPlayer, Square square)
+    {
+        List<int> flankedPieces = new List<int>();
+        flankedPieces.AddRange(AddFlankedPieces(currentPlayer, square, -1));
+        flankedPieces.AddRange(AddFlankedPieces(currentPlayer, square, 1));
+        flankedPieces.AddRange(AddFlankedPieces(currentPlayer, square, -8));
+        flankedPieces.AddRange(AddFlankedPieces(currentPlayer, square, 8));
+        flankedPieces.AddRange(AddFlankedPieces(currentPlayer, square, -9));
+        flankedPieces.AddRange(AddFlankedPieces(currentPlayer, square, 9));
+        flankedPieces.AddRange(AddFlankedPieces(currentPlayer, square, -7));
+        flankedPieces.AddRange(AddFlankedPieces(currentPlayer, square, 7));
+
+        for (int i = 0; i < flankedPieces.Count; i++)
+            CaptureTile(currentPlayer, squares[flankedPieces[i]]);
     }
 
     public void FlipPiece(Player player, Piece piece)
@@ -52,7 +71,7 @@ public class Board : MonoBehaviour {
     public void Reset()
     {
         this.squares = new Square[64];
-        this.legalMoves.Clear();
+        ResetLegalMoves();
         this.pieces.Clear();
         GameObject[] pieceObjects = GameObject.FindGameObjectsWithTag("Piece");
         GameObject[] squareObjects = GameObject.FindGameObjectsWithTag("Square");
@@ -62,7 +81,27 @@ public class Board : MonoBehaviour {
             Destroy(squareObjects[i]);
     }
 
-    Vector3 DeterminePlacementCoordinates(int position)
+    private List<int> AddFlankedPieces(Player currentPlayer, Square square, int direction)
+    {
+        List<int> flankedPieces = new List<int>();
+
+        for (int i = square.position + direction; i >= 0 && i <= 63; i += direction)
+        {
+            if (playerMap[i] != currentPlayer && playerMap[i] != Player.Nobody)
+                flankedPieces.Add(i);
+            else if (playerMap[i] == currentPlayer)
+                break; // we have flanked everything we can in this direction
+            else if (playerMap[i] == Player.Nobody || IsPastBoardEdge(square, squares[i], direction))
+            {
+                flankedPieces.Clear();
+                break; // nothing here can be flanked
+            }
+        }
+
+        return flankedPieces;
+    }
+
+    private Vector3 DeterminePlacementCoordinates(int position)
     {
         int row = position / 8;
         int col = position % 8;
@@ -78,26 +117,87 @@ public class Board : MonoBehaviour {
         Vector3 piecePosition = s.transform.position;
         piecePosition.y = 1f;
         Piece newPiece;
-        if (s.player == Player.White)
+        if (playerMap[s.position] == Player.White)
             newPiece = Instantiate(piecePrefab, piecePosition, Quaternion.identity) as Piece;
         else
             newPiece = Instantiate(piecePrefab, piecePosition, Quaternion.AngleAxis(180f, Vector3.right)) as Piece;
         pieces.Add(s.position, newPiece);
     }
 
-    void InitializeTile(int position, Player player)
+    public void InitializeTile(int position, Player player)
     {
+        playerMap[position] = player;
+
         Vector3 squarePos = DeterminePlacementCoordinates(position);
         squarePos.y += .2f;
         Square s = Instantiate(squarePrefab, squarePos, Quaternion.identity) as Square;
         s.gameObject.GetComponent<MeshRenderer>().enabled = false;
-        s.player = player;
         s.position = position;
         s.row = position % 8;
         s.column = position / 8;
         s.isLegalMove = false;
+
         if (player != Player.Nobody)
             PlacePiece(s);
         squares[position] = s;
+    }
+
+    public void UpdateLegalMoves(Player currentPlayer)
+    {
+        ResetLegalMoves();
+        for (int i = 0; i < 64; i++)
+        {
+            if (playerMap[i] == currentPlayer)
+            {
+                AddLegalMove(currentPlayer, i, -1);
+                AddLegalMove(currentPlayer, i, 1);
+                AddLegalMove(currentPlayer, i, -8);
+                AddLegalMove(currentPlayer, i, 8);
+                AddLegalMove(currentPlayer, i, -9);
+                AddLegalMove(currentPlayer, i, 9);
+                AddLegalMove(currentPlayer, i, -7);
+                AddLegalMove(currentPlayer, i, 7);
+            }
+        }
+    }
+
+    private void AddLegalMove(Player player, int position, int direction)
+    {
+        bool flankablesExist = false;
+
+        for (int i = position + direction; i >= 0 && i <= 63; i += direction)
+        {
+            if (IsPastBoardEdge(squares[position], squares[i], direction))
+                return; // we can't go this way
+            if (playerMap[i] != player && playerMap[i] != Player.Nobody)
+                flankablesExist = true;
+            else if (playerMap[i] == Player.Nobody && flankablesExist)
+            {
+                squares[i].isLegalMove = true;
+                return;
+            }
+            else return; // we can't go this way
+        }
+    }
+
+    public bool IsPastBoardEdge(Square start, Square end, int direction)
+    {
+        if (direction > 0) return (start.row - end.row) > 0;
+        else return (start.row - end.row) < 0;
+    }
+
+    public void ResetLegalMoves()
+    {
+        foreach (Square s in squares)
+            if (s.isLegalMove)
+                s.isLegalMove = false;
+    }
+
+    public bool HasLegalMoves()
+    {
+        for (int i = 0; i < 64; i++)
+            if (squares[i].isLegalMove)
+                return true;
+        return false;
     }
 }
