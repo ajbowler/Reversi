@@ -79,8 +79,7 @@ public class GameController : MonoBehaviour
             if (clickedSquare > -1 && board.squares[clickedSquare].isLegalMove)
             {
                 MakeMove(board, ply, board.squares[clickedSquare], true);
-                if (ply == human) SetPly(ai);
-                else SetPly(human);
+                SetPly(ai);
             }
         }
         while (ply == human) yield return null;
@@ -93,6 +92,7 @@ public class GameController : MonoBehaviour
 
         int movePos = GetNextMove(board.squares, nextBoard);
         MakeMove(board, ply, board.squares[movePos], true);
+        SetPly(human);
 
         while (ply == ai) yield return null; // TODO
     }
@@ -236,7 +236,7 @@ public class GameController : MonoBehaviour
     public void UpdateLegalMoves(Player currentPlayer)
     {
         if (board.legalMoves.Count > 0)
-            ResetLegalMoves();
+            ResetLegalMoves(board);
         foreach (Square square in board.squares)
         {
             if (square.player == currentPlayer)
@@ -286,12 +286,10 @@ public class GameController : MonoBehaviour
 
     private Board CopyBoard()
     {
-        Board newBoard = gameObject.AddComponent<Board>();
-        newBoard.gameController = this;
-        newBoard.legalMoves = new List<Square>();
-        newBoard.squares = (Square[])board.squares.Clone();
+        Board newBoard = Instantiate(board);
         for (int i = 0; i < 64; i++)
         {
+            newBoard.squares[i] = CopySquare(board.squares[i]);
             if (newBoard.squares[i].isLegalMove)
                 newBoard.legalMoves.Add(newBoard.squares[i]);
         }
@@ -326,7 +324,8 @@ public class GameController : MonoBehaviour
 
     private Square CopySquare(Square s)
     {
-        Square square = gameObject.AddComponent<Square>();
+        Square square = Instantiate(s);
+        square.gameObject.SetActive(false);
         square.column = s.column;
         square.isLegalMove = s.isLegalMove;
         square.player = s.player;
@@ -423,23 +422,18 @@ public class GameController : MonoBehaviour
     private int GetNextMove(Square[] currentBoard, Square[] nextBoard)
     {
         for (int i = 0; i < 64; i++)
-        {
             if (currentBoard[i].player == Player.Nobody && nextBoard[i].player == ai)
                 return i;
-        }
 
         Debug.Log("ERROR");
         return -1;
     }
 
-    private void ResetLegalMoves()
+    private void ResetLegalMoves(Board board)
     {
         foreach (Square s in board.squares)
-        {
             if (s.isLegalMove)
                 s.isLegalMove = false;
-        }
-
         board.legalMoves.Clear();
     }
 }
