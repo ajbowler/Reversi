@@ -222,7 +222,7 @@ public class GameController : MonoBehaviour
     void MakeMove(Player[] map, Player currentPlayer, int position)
     {
         map[position] = currentPlayer;
-        FlankPieces(playerMap, currentPlayer, position);
+        FlankPieces(map, currentPlayer, position);
     }
 
     void SetPly(Player player)
