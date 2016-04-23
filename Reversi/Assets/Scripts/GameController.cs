@@ -100,12 +100,14 @@ public class GameController : MonoBehaviour
 
     void UpdateSquareDisplays()
     {
-        foreach (Square s in squares)
+        List<int> legalMoves = GetLegalMoves(playerMap, ply);
+
+        for (int i = 0; i < 64; i++)
         {
-            if (s.isLegalMove)
-                s.gameObject.GetComponent<MeshRenderer>().enabled = true;
+            if (legalMoves.Contains(i))
+                squares[i].gameObject.GetComponent<MeshRenderer>().enabled = true;
             else
-                s.gameObject.GetComponent<MeshRenderer>().enabled = false;
+                squares[i].gameObject.GetComponent<MeshRenderer>().enabled = false;
         }
     }
 
@@ -135,7 +137,7 @@ public class GameController : MonoBehaviour
 
     IEnumerator PlayGame()
     {
-        if (!HasLegalMoves())
+        if (GetLegalMoves(playerMap, ply).Count == 0)
             GameOver();
         else
         {
@@ -152,7 +154,8 @@ public class GameController : MonoBehaviour
         if (Input.GetMouseButtonUp(0))
         {
             int clickedSquare = GetClickedSquare();
-            if (clickedSquare > -1 && squares[clickedSquare].isLegalMove)
+            List<int> legalMoves = GetLegalMoves(playerMap, human);
+            if (clickedSquare > -1 && legalMoves.Contains(clickedSquare))
             {
                 MakeMove(playerMap, ply, clickedSquare);
                 SetPly(ai);
@@ -163,12 +166,11 @@ public class GameController : MonoBehaviour
 
     IEnumerator AITurn()
     {
-        //Player[] boardMap = GetBoardPlayerMap(board.squares);
-        //MinimaxPair<Player[], double> moveToMake = Minimax(boardMap, difficulty, true);
+        //MinimaxPair<Player[], double> moveToMake = Minimax(playerMap, difficulty, true);
         //Player[] nextBoard = moveToMake.bestMove;
 
-        //int movePos = GetNextMove(board.squares, nextBoard);
-        //MakeMove(board, ply, board.squares[movePos]);
+        //int movePos = GetNextMove(playerMap, nextBoard);
+        //MakeMove(playerMap, ai, movePos);
         //SetPly(human);
 
         //while (ply == ai) yield return null; // TODO
@@ -176,7 +178,8 @@ public class GameController : MonoBehaviour
         if (Input.GetMouseButtonUp(0))
         {
             int clickedSquare = GetClickedSquare();
-            if (clickedSquare > -1 && squares[clickedSquare].isLegalMove)
+            List<int> legalMoves = GetLegalMoves(playerMap, ai);
+            if (clickedSquare > -1 && legalMoves.Contains(clickedSquare))
             {
                 MakeMove(playerMap, ply, clickedSquare);
                 SetPly(human);
@@ -216,69 +219,65 @@ public class GameController : MonoBehaviour
         }
     }
 
-    void MakeMove(Player[] playerMap, Player ply, int position)
+    void MakeMove(Player[] map, Player currentPlayer, int position)
     {
-        if (squares[position].isLegalMove)
-        {
-            CaptureTile(playerMap, ply, position);
-            FlankPieces(playerMap, ply, position);
-        }
+        map[position] = currentPlayer;
+        FlankPieces(playerMap, currentPlayer, position);
     }
 
     void SetPly(Player player)
     {
         ply = player;
-        UpdateLegalMoves(playerMap, ply);
+
+        // TODO add logic for skipping turns
     }
 
-    //MinimaxPair<Player[], double> Minimax(Player[] boardMap, int depth, bool maximizingPlayer)
-    //{
-    //    List<Square> legalMoves = GetLegalMoves(boardMap);
-    //    if (legalMoves.Count == 0 || depth == 0)
-    //        return new MinimaxPair<Player[], double>(boardMap, Evaluate(squares));
-
-    //    MinimaxPair<Player[], double> bestBoard = new MinimaxPair<Player[], double>();
-
-    //    if (maximizingPlayer)
-    //    {
-    //        bestBoard.bestScore = Mathf.NegativeInfinity;
-    //        foreach (Square legalMove in legalMoves)
-    //        {
-    //            Board newBoard = CopyBoard();
-    //            MakeMove(newBoard, ply, legalMove, false);
-    //            Player[] newBoardMap = GetBoardPlayerMap(newBoard.squares);
-    //            MinimaxPair<Player[], double> nextMove = Minimax(newBoardMap, newBoard.squares, depth - 1, false);
-    //            if (nextMove.bestScore > bestBoard.bestScore)
-    //            {
-    //                bestBoard.bestMove = nextMove.bestMove;
-    //                bestBoard.bestScore = nextMove.bestScore;
-    //            }
-    //        }
-    //        return bestBoard;
-    //    }
-    //    else
-    //    {
-    //        bestBoard.bestScore = Mathf.Infinity;
-    //        foreach (Square legalMove in legalMoves)
-    //        {
-    //            Board newBoard = CopyBoard();
-    //            MakeMove(newBoard, ply, legalMove, false);
-    //            Player[] newBoardMap = GetBoardPlayerMap(newBoard.squares);
-    //            MinimaxPair<Player[], double> nextMove = Minimax(newBoardMap, newBoard.squares, depth - 1, true);
-    //            if (nextMove.bestScore < bestBoard.bestScore)
-    //            {
-    //                bestBoard.bestMove = nextMove.bestMove;
-    //                bestBoard.bestScore = nextMove.bestScore;
-    //            }
-    //        }
-    //        return bestBoard;
-    //    }
-    //}
-
-    void CaptureTile(Player[] map, Player player, int position)
+    MinimaxPair<Player[], double> Minimax(Player[] boardMap, int depth, bool maximizingPlayer)
     {
-        squares[position].isLegalMove = false;
-        map[position] = player;
+        Player[] gameTreeMap = (Player[])boardMap.Clone();
+        List<int> legalMoves;
+        if (maximizingPlayer)
+            legalMoves = GetLegalMoves(gameTreeMap, ai);
+        else
+            legalMoves = GetLegalMoves(gameTreeMap, human);
+
+        if (legalMoves.Count == 0 || depth == 0)
+            return new MinimaxPair<Player[], double>(gameTreeMap, Evaluate(gameTreeMap));
+
+        MinimaxPair<Player[], double> bestBoard = new MinimaxPair<Player[], double>();
+
+        if (maximizingPlayer)
+        {
+            bestBoard.bestScore = Mathf.NegativeInfinity;
+            foreach (int legalMove in legalMoves)
+            {
+                MakeMove(gameTreeMap, ply, legalMove);
+                Player[] newGameTreeMap = (Player[])gameTreeMap.Clone();
+                MinimaxPair<Player[], double> nextMove = Minimax(newGameTreeMap, depth - 1, false);
+                if (nextMove.bestScore > bestBoard.bestScore)
+                {
+                    bestBoard.bestMove = nextMove.bestMove;
+                    bestBoard.bestScore = nextMove.bestScore;
+                }
+            }
+            return bestBoard;
+        }
+        else
+        {
+            bestBoard.bestScore = Mathf.Infinity;
+            foreach (int legalMove in legalMoves)
+            {
+                MakeMove(gameTreeMap, ply, legalMove);
+                Player[] newGameTreeMap = (Player[])gameTreeMap.Clone();
+                MinimaxPair<Player[], double> nextMove = Minimax(newGameTreeMap, depth - 1, true);
+                if (nextMove.bestScore < bestBoard.bestScore)
+                {
+                    bestBoard.bestMove = nextMove.bestMove;
+                    bestBoard.bestScore = nextMove.bestScore;
+                }
+            }
+            return bestBoard;
+        }
     }
 
     void FlankPieces(Player[] map, Player currentPlayer, int position)
@@ -294,7 +293,7 @@ public class GameController : MonoBehaviour
         flankedPieces.AddRange(AddFlankedPieces(map, currentPlayer, position, 7));
 
         for (int i = 0; i < flankedPieces.Count; i++)
-            CaptureTile(map, currentPlayer, flankedPieces[i]);
+            map[flankedPieces[i]] = currentPlayer;
     }
 
     void PlacePiece(int position)
@@ -319,7 +318,6 @@ public class GameController : MonoBehaviour
         Square s = Instantiate(squarePrefab, squarePos, Quaternion.identity) as Square;
         s.gameObject.GetComponent<MeshRenderer>().enabled = false;
         s.position = position;
-        s.isLegalMove = false;
         squares[position] = s;
         if (player != Player.Nobody)
             PlacePiece(position);
@@ -344,62 +342,42 @@ public class GameController : MonoBehaviour
             Destroy(squareObjects[i]);
     }
 
-    void UpdateLegalMoves(Player[] map, Player currentPlayer)
+    List<int> GetLegalMoves(Player[] map, Player currentPlayer)
     {
-        ResetLegalMoves();
-        for (int i = 0; i < 64; i++)
+        List<int> legalMoves = new List<int>();
+        int[] directions = new int[8] { -1, 1, -8, 8, -9, 9, -7, 7 };
+
+        for (int start = 0; start < 64; start++)
         {
-            if (map[i] == currentPlayer)
+            if (map[start] == currentPlayer)
             {
-                AddLegalMove(map, currentPlayer, i, -1);
-                AddLegalMove(map, currentPlayer, i, 1);
-                AddLegalMove(map, currentPlayer, i, -8);
-                AddLegalMove(map, currentPlayer, i, 8);
-                AddLegalMove(map, currentPlayer, i, -9);
-                AddLegalMove(map, currentPlayer, i, 9);
-                AddLegalMove(map, currentPlayer, i, -7);
-                AddLegalMove(map, currentPlayer, i, 7);
+                foreach (int direction in directions)
+                {
+                    int legalMove = AddLegalMove(map, currentPlayer, start, direction);
+                    if (legalMove != -1)
+                        legalMoves.Add(legalMove);
+                }
             }
         }
+        return legalMoves;
     }
 
-    void AddLegalMove(Player[] map, Player player, int position, int direction)
+    int AddLegalMove(Player[] map, Player player, int position, int direction)
     {
         bool flankablesExist = false;
 
         for (int i = position + direction; i >= 0 && i <= 63; i += direction)
         {
             if (IsPastBoardEdge(position, position, direction))
-                return; // we can't go this way
+                return -1; // we can't go this way
             if (map[i] != player && map[i] != Player.Nobody)
                 flankablesExist = true;
             else if (map[i] == Player.Nobody && flankablesExist)
-            {
-                squares[i].isLegalMove = true;
-                return;
-            }
-            else return; // we can't go this way
+                return i; // found a legal move
+            else return -1; // we can't go this way
         }
-    }
 
-    void ResetLegalMoves()
-    {
-        foreach (Square s in squares)
-            if (s.isLegalMove)
-                s.isLegalMove = false;
-    }
-
-    bool HasLegalMoves()
-    {
-        for (int i = 0; i < 64; i++)
-        {
-            if (squares[i] != null)
-            {
-                if (squares[i].isLegalMove)
-                    return true;
-            }
-        }
-        return false;
+        return -1;
     }
 
     Vector3 DeterminePlacementCoordinates(int position)
@@ -429,7 +407,6 @@ public class GameController : MonoBehaviour
                 break; // nothing here can be flanked
             }
         }
-
         return flankedPieces;
     }
 
@@ -458,7 +435,6 @@ public class GameController : MonoBehaviour
         score += GetCornerScore(boardMap);
         score += GetEdgeScore(boardMap);
         score += GetPieceCountScore(boardMap);
-
         return score;
     }
 
@@ -473,7 +449,6 @@ public class GameController : MonoBehaviour
             else if (boardMap[corner] == human)
                 score--;
         }
-
         return score * 20;
     }
 
@@ -490,7 +465,6 @@ public class GameController : MonoBehaviour
                     score--;
             }
         }
-
         return score * 10;
     }
 
@@ -505,7 +479,6 @@ public class GameController : MonoBehaviour
             else if (boardMap[i] == human)
                 score--;
         }
-
         return score;
     }
 
