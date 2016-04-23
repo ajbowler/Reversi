@@ -41,10 +41,10 @@ public class GameController : MonoBehaviour
     public Text winnerText;
     public Dropdown colorSelector;
     public Dropdown difficultySelector;
-    public Player human;
-    public Player ai;
-    public Player[] playerMap;
 
+    private Player human;
+    private Player ai;
+    private Player[] playerMap;
     private int difficulty;
     private int blackScore;
     private int whiteScore;
@@ -62,6 +62,75 @@ public class GameController : MonoBehaviour
     {
         if (mainMenu.activeSelf) UseMenu();
         else StartCoroutine(PlayGame());
+    }
+
+    void UpdateScore()
+    {
+        blackScore = 0;
+        whiteScore = 0;
+        foreach (Player player in playerMap)
+        {
+            if (player == Player.Black)
+                blackScore++;
+            else if (player == Player.White)
+                whiteScore++;
+        }
+
+        blackScoreText.text = "Black: " + blackScore;
+        whiteScoreText.text = "White: " + whiteScore;
+    }
+
+    void UpdatePieces()
+    {
+        for (int i = 0; i < 64; i++)
+        {
+            if (playerMap[i] != Player.Nobody)
+            {
+                Piece existingPiece;
+                if (!pieces.TryGetValue(i, out existingPiece))
+                    PlacePiece(i);
+                else
+                {
+                    if (pieces[i].player != playerMap[i])
+                        FlipPiece(playerMap[i], pieces[i]);
+                }
+            }
+        }
+    }
+
+    void UpdateSquareDisplays()
+    {
+        foreach (Square s in squares)
+        {
+            if (s.isLegalMove)
+                s.gameObject.GetComponent<MeshRenderer>().enabled = true;
+            else
+                s.gameObject.GetComponent<MeshRenderer>().enabled = false;
+        }
+    }
+
+    void UseMenu()
+    {
+        board.gameObject.SetActive(false);
+        if (Input.GetKeyUp(KeyCode.Return))
+        {
+            mainMenu.SetActive(false);
+            difficulty = difficultySelector.value + 1;
+            if (colorSelector.value == 0)
+            {
+                human = Player.Black;
+                ai = Player.White;
+            }
+            else
+            {
+                human = Player.White;
+                ai = Player.Black;
+            }
+            SetInitialBoard();
+            blackScoreText.gameObject.SetActive(true);
+            whiteScoreText.gameObject.SetActive(true);
+            SetPly(Player.Black);
+        }
     }
 
     IEnumerator PlayGame()
@@ -116,34 +185,10 @@ public class GameController : MonoBehaviour
         while (ply == ai) yield return null;
     }
 
-    public void UseMenu()
-    {
-        board.gameObject.SetActive(false);
-        if (Input.GetKeyUp(KeyCode.Return))
-        {
-            mainMenu.SetActive(false);
-            difficulty = difficultySelector.value + 1;
-            if (colorSelector.value == 0)
-            {
-                human = Player.Black;
-                ai = Player.White;
-            }
-            else
-            {
-                human = Player.White;
-                ai = Player.Black;
-            }
-            SetInitialBoard();
-            blackScoreText.gameObject.SetActive(true);
-            whiteScoreText.gameObject.SetActive(true);
-            SetPly(Player.Black);
-        }
-    }
-
-    public void SetInitialBoard()
+    void SetInitialBoard()
     {
         board.gameObject.SetActive(true);
-        for (int i = 0; i< 64; i++)
+        for (int i = 0; i < 64; i++)
         {
             if (i == 27 || i == 36) InitializeTile(i, Player.Black);
             else if (i == 28 || i == 35) InitializeTile(i, Player.White);
@@ -152,7 +197,7 @@ public class GameController : MonoBehaviour
     }
 
 
-    public void GameOver()
+    void GameOver()
     {
         Reset();
         board.gameObject.SetActive(false);
@@ -171,7 +216,7 @@ public class GameController : MonoBehaviour
         }
     }
 
-    public void MakeMove(Player[] playerMap, Player ply, int position)
+    void MakeMove(Player[] playerMap, Player ply, int position)
     {
         if (squares[position].isLegalMove)
         {
@@ -180,44 +225,10 @@ public class GameController : MonoBehaviour
         }
     }
 
-    public void SetPly(Player player)
+    void SetPly(Player player)
     {
         ply = player;
         UpdateLegalMoves(playerMap, ply);
-    }
-
-    public void UpdateScore()
-    {
-        blackScore = 0;
-        whiteScore = 0;
-        foreach (Player player in playerMap)
-        {
-            if (player == Player.Black)
-                blackScore++;
-            else if (player == Player.White)
-                whiteScore++;
-        }
-
-        blackScoreText.text = "Black: " + blackScore;
-        whiteScoreText.text = "White: " + whiteScore;
-    }
-
-    public void UpdatePieces()
-    {
-        for (int i = 0; i < 64; i++)
-        {
-            if (playerMap[i] != Player.Nobody)
-            {
-                Piece existingPiece;
-                if (!pieces.TryGetValue(i, out existingPiece))
-                    PlacePiece(i);
-                else
-                {
-                    if (pieces[i].player != playerMap[i])
-                        FlipPiece(playerMap[i], pieces[i]);
-                }
-            }
-        }
     }
 
     //MinimaxPair<Player[], double> Minimax(Player[] boardMap, int depth, bool maximizingPlayer)
@@ -264,24 +275,13 @@ public class GameController : MonoBehaviour
     //    }
     //}
 
-    public void UpdateSquareDisplays()
-    {
-        foreach (Square s in squares)
-        {
-            if (s.isLegalMove)
-                s.gameObject.GetComponent<MeshRenderer>().enabled = true;
-            else
-                s.gameObject.GetComponent<MeshRenderer>().enabled = false;
-        }
-    }
-
-    public void CaptureTile(Player[] map, Player player, int position)
+    void CaptureTile(Player[] map, Player player, int position)
     {
         squares[position].isLegalMove = false;
         map[position] = player;
     }
 
-    public void FlankPieces(Player[] map, Player currentPlayer, int position)
+    void FlankPieces(Player[] map, Player currentPlayer, int position)
     {
         List<int> flankedPieces = new List<int>();
         flankedPieces.AddRange(AddFlankedPieces(map, currentPlayer, position, -1));
@@ -297,26 +297,7 @@ public class GameController : MonoBehaviour
             CaptureTile(map, currentPlayer, flankedPieces[i]);
     }
 
-    public void Reset()
-    {
-        squares = new Square[64];
-        playerMap = new Player[64];
-        pieces.Clear();
-        GameObject[] pieceObjects = GameObject.FindGameObjectsWithTag("Piece");
-        GameObject[] squareObjects = GameObject.FindGameObjectsWithTag("Square");
-        for (int i = 0; i < pieceObjects.Length; i++)
-            Destroy(pieceObjects[i]);
-        for (int i = 0; i < squareObjects.Length; i++)
-            Destroy(squareObjects[i]);
-    }
-
-    public void FlipPiece(Player player, Piece piece)
-    {
-        piece.player = player;
-        piece.gameObject.transform.Rotate(180f, 0f, 0f);
-    }
-
-    public void PlacePiece(int position)
+    void PlacePiece(int position)
     {
         Vector3 piecePosition = squares[position].transform.position;
         piecePosition.y = 1f;
@@ -329,7 +310,7 @@ public class GameController : MonoBehaviour
         pieces.Add(squares[position].position, newPiece);
     }
 
-    public void InitializeTile(int position, Player player)
+    void InitializeTile(int position, Player player)
     {
         playerMap[position] = player;
 
@@ -344,7 +325,26 @@ public class GameController : MonoBehaviour
             PlacePiece(position);
     }
 
-    public void UpdateLegalMoves(Player[] map, Player currentPlayer)
+    void FlipPiece(Player player, Piece piece)
+    {
+        piece.player = player;
+        piece.gameObject.transform.Rotate(180f, 0f, 0f);
+    }
+
+    void Reset()
+    {
+        squares = new Square[64];
+        playerMap = new Player[64];
+        pieces.Clear();
+        GameObject[] pieceObjects = GameObject.FindGameObjectsWithTag("Piece");
+        GameObject[] squareObjects = GameObject.FindGameObjectsWithTag("Square");
+        for (int i = 0; i < pieceObjects.Length; i++)
+            Destroy(pieceObjects[i]);
+        for (int i = 0; i < squareObjects.Length; i++)
+            Destroy(squareObjects[i]);
+    }
+
+    void UpdateLegalMoves(Player[] map, Player currentPlayer)
     {
         ResetLegalMoves();
         for (int i = 0; i < 64; i++)
@@ -363,7 +363,7 @@ public class GameController : MonoBehaviour
         }
     }
 
-    private void AddLegalMove(Player[] map, Player player, int position, int direction)
+    void AddLegalMove(Player[] map, Player player, int position, int direction)
     {
         bool flankablesExist = false;
 
@@ -382,14 +382,14 @@ public class GameController : MonoBehaviour
         }
     }
 
-    public void ResetLegalMoves()
+    void ResetLegalMoves()
     {
         foreach (Square s in squares)
             if (s.isLegalMove)
                 s.isLegalMove = false;
     }
 
-    public bool HasLegalMoves()
+    bool HasLegalMoves()
     {
         for (int i = 0; i < 64; i++)
         {
@@ -402,7 +402,7 @@ public class GameController : MonoBehaviour
         return false;
     }
 
-    private Vector3 DeterminePlacementCoordinates(int position)
+    Vector3 DeterminePlacementCoordinates(int position)
     {
         int row = position / 8;
         int col = position % 8;
@@ -413,7 +413,7 @@ public class GameController : MonoBehaviour
         return new Vector3(x, 1f, z);
     }
 
-    private List<int> AddFlankedPieces(Player[] playerMap, Player currentPlayer, int position, int direction)
+    List<int> AddFlankedPieces(Player[] playerMap, Player currentPlayer, int position, int direction)
     {
         List<int> flankedPieces = new List<int>();
 
@@ -433,13 +433,13 @@ public class GameController : MonoBehaviour
         return flankedPieces;
     }
 
-    private bool IsPastBoardEdge(int start, int end, int direction)
+    bool IsPastBoardEdge(int start, int end, int direction)
     {
         if (direction > 0) return ((start % 8) - (end % 8)) > 0;
         else return ((start % 8) - (end % 8)) < 0;
     }
 
-    private int GetClickedSquare()
+    int GetClickedSquare()
     {
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
         RaycastHit hit;
@@ -452,7 +452,7 @@ public class GameController : MonoBehaviour
         else return -1;
     }
 
-    private double Evaluate(Player[] boardMap)
+    double Evaluate(Player[] boardMap)
     {
         double score = 0.0f;
         score += GetCornerScore(boardMap);
@@ -462,7 +462,7 @@ public class GameController : MonoBehaviour
         return score;
     }
 
-    private double GetCornerScore(Player[] boardMap)
+    double GetCornerScore(Player[] boardMap)
     {
         int[] corners = new int[4] { 0, 7, 56, 63 };
         double score = 0.0f;
@@ -477,7 +477,7 @@ public class GameController : MonoBehaviour
         return score * 20;
     }
 
-    private double GetEdgeScore(Player[] boardMap)
+    double GetEdgeScore(Player[] boardMap)
     {
         double score = 0.0f;
         for (int i = 0; i < 64; i++)
@@ -494,7 +494,7 @@ public class GameController : MonoBehaviour
         return score * 10;
     }
 
-    private double GetPieceCountScore(Player[] boardMap)
+    double GetPieceCountScore(Player[] boardMap)
     {
         double score = 0.0f;
 
@@ -509,7 +509,7 @@ public class GameController : MonoBehaviour
         return score;
     }
 
-    private int GetNextMove(Player[] currentBoardMap, Player[] nextBoardMap)
+    int GetNextMove(Player[] currentBoardMap, Player[] nextBoardMap)
     {
         for (int i = 0; i < 64; i++)
             if (currentBoardMap[i] == Player.Nobody && nextBoardMap[i] == ai)
