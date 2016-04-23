@@ -422,7 +422,14 @@ public class GameController : MonoBehaviour
     {
         Player[] newMap = new Player[64];
         for (int i = 0; i < 64; i++)
-            newMap[i] = map[i];
+        {
+            if (map[i] == Player.Black)
+                newMap[i] = Player.Black;
+            else if (map[i] == Player.White)
+                newMap[i] = Player.White;
+            else
+                newMap[i] = Player.Nobody;
+        }
         return newMap;
     }
 
