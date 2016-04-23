@@ -36,18 +36,29 @@ public class Board : MonoBehaviour {
         }
     }
 
-    public void CaptureTile(Player player, Square square)
+    public void UpdatePieces()
     {
-        squares[square.position].isLegalMove = false;
-        playerMap[square.position] = player;
-        Piece existingPiece;
-        if (pieces.TryGetValue(square.position, out existingPiece))
-            pieces[square.position].gameObject.transform.Rotate(180f, 0f, 0f);
-        else
-            PlacePiece(squares[square.position]);
+        for (int i = 0; i < 64; i++)
+        {
+            if (playerMap[i] != Player.Nobody)
+            {
+                Piece existingPiece;
+                if (!pieces.TryGetValue(i, out existingPiece))
+                    PlacePiece(squares[i]);
+                else
+                {
+                    if (pieces[i].player != playerMap[i])
+                        FlipPiece(playerMap[i], pieces[i]);
+                }
+            }
+        }
     }
 
-    public void FlankPieces(Player currentPlayer, Square square)
+    public void CaptureTile(Player[] playerMap, Player player, int position)
+    {
+        squares[position].isLegalMove = false;
+        playerMap[position] = player;
+    }
     {
         List<int> flankedPieces = new List<int>();
         flankedPieces.AddRange(AddFlankedPieces(currentPlayer, square, -1));

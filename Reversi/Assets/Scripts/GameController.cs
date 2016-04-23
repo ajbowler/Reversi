@@ -55,6 +55,7 @@ public class GameController : MonoBehaviour
             GameOver();
         else
         {
+            board.UpdatePieces();
             UpdateSquareDisplays();
             UpdateScore();
             if (ply == human) yield return StartCoroutine(HumanTurn());
