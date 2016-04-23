@@ -423,6 +423,7 @@ public class GameController : MonoBehaviour
         Player[] newMap = new Player[64];
         for (int i = 0; i < 64; i++)
         {
+            // I am very paranoid and C# dumb
             if (map[i] == Player.Black)
                 newMap[i] = Player.Black;
             else if (map[i] == Player.White)
