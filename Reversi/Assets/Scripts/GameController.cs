@@ -166,26 +166,28 @@ public class GameController : MonoBehaviour
 
     IEnumerator AITurn()
     {
-        //MinimaxPair<Player[], double> moveToMake = Minimax(playerMap, difficulty, true);
-        //Player[] nextBoard = moveToMake.bestMove;
+        MinimaxPair<Player[], double> moveToMake = Minimax(playerMap, difficulty, true);
+        Player[] nextBoard = moveToMake.bestMove;
 
-        //int movePos = GetNextMove(playerMap, nextBoard);
-        //MakeMove(playerMap, ai, movePos);
-        //SetPly(human);
+        int movePos = GetNextMove(playerMap, nextBoard);
+        MakeMove(playerMap, ai, movePos);
+        SetPly(human);
 
-        //while (ply == ai) yield return null; // TODO
-
-        if (Input.GetMouseButtonUp(0))
-        {
-            int clickedSquare = GetClickedSquare();
-            List<int> legalMoves = GetLegalMoves(playerMap, ai);
-            if (clickedSquare > -1 && legalMoves.Contains(clickedSquare))
-            {
-                MakeMove(playerMap, ply, clickedSquare);
-                SetPly(human);
-            }
-        }
         while (ply == ai) yield return null;
+
+        // THIS IS FOR PIECE PLACEMENT TESTING
+
+        //if (Input.GetMouseButtonUp(0))
+        //{
+        //    int clickedSquare = GetClickedSquare();
+        //    List<int> legalMoves = GetLegalMoves(playerMap, ai);
+        //    if (clickedSquare > -1 && legalMoves.Contains(clickedSquare))
+        //    {
+        //        MakeMove(playerMap, ply, clickedSquare);
+        //        SetPly(human);
+        //    }
+        //}
+        //while (ply == ai) yield return null;
     }
 
     void SetInitialBoard()
@@ -234,7 +236,7 @@ public class GameController : MonoBehaviour
 
     MinimaxPair<Player[], double> Minimax(Player[] boardMap, int depth, bool maximizingPlayer)
     {
-        Player[] gameTreeMap = (Player[])boardMap.Clone();
+        Player[] gameTreeMap = CopyPlayerMap(boardMap);
         List<int> legalMoves;
         if (maximizingPlayer)
             legalMoves = GetLegalMoves(gameTreeMap, ai);
@@ -252,7 +254,7 @@ public class GameController : MonoBehaviour
             foreach (int legalMove in legalMoves)
             {
                 MakeMove(gameTreeMap, ply, legalMove);
-                Player[] newGameTreeMap = (Player[])gameTreeMap.Clone();
+                Player[] newGameTreeMap = CopyPlayerMap(gameTreeMap);
                 MinimaxPair<Player[], double> nextMove = Minimax(newGameTreeMap, depth - 1, false);
                 if (nextMove.bestScore > bestBoard.bestScore)
                 {
@@ -268,7 +270,7 @@ public class GameController : MonoBehaviour
             foreach (int legalMove in legalMoves)
             {
                 MakeMove(gameTreeMap, ply, legalMove);
-                Player[] newGameTreeMap = (Player[])gameTreeMap.Clone();
+                Player[] newGameTreeMap = CopyPlayerMap(gameTreeMap);
                 MinimaxPair<Player[], double> nextMove = Minimax(newGameTreeMap, depth - 1, true);
                 if (nextMove.bestScore < bestBoard.bestScore)
                 {
@@ -414,6 +416,14 @@ public class GameController : MonoBehaviour
     {
         if (direction > 0) return ((start % 8) - (end % 8)) > 0;
         else return ((start % 8) - (end % 8)) < 0;
+    }
+
+    Player[] CopyPlayerMap(Player[] map)
+    {
+        Player[] newMap = new Player[64];
+        for (int i = 0; i < 64; i++)
+            newMap[i] = map[i];
+        return newMap;
     }
 
     int GetClickedSquare()
