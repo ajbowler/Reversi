@@ -59,23 +59,26 @@ public class Board : MonoBehaviour {
         squares[position].isLegalMove = false;
         playerMap[position] = player;
     }
+
+    public void FlankPieces(Player[] playerMap, Player currentPlayer, int position)
     {
         List<int> flankedPieces = new List<int>();
-        flankedPieces.AddRange(AddFlankedPieces(currentPlayer, square, -1));
-        flankedPieces.AddRange(AddFlankedPieces(currentPlayer, square, 1));
-        flankedPieces.AddRange(AddFlankedPieces(currentPlayer, square, -8));
-        flankedPieces.AddRange(AddFlankedPieces(currentPlayer, square, 8));
-        flankedPieces.AddRange(AddFlankedPieces(currentPlayer, square, -9));
-        flankedPieces.AddRange(AddFlankedPieces(currentPlayer, square, 9));
-        flankedPieces.AddRange(AddFlankedPieces(currentPlayer, square, -7));
-        flankedPieces.AddRange(AddFlankedPieces(currentPlayer, square, 7));
+        flankedPieces.AddRange(AddFlankedPieces(playerMap, currentPlayer, position, -1));
+        flankedPieces.AddRange(AddFlankedPieces(playerMap, currentPlayer, position, 1));
+        flankedPieces.AddRange(AddFlankedPieces(playerMap, currentPlayer, position, -8));
+        flankedPieces.AddRange(AddFlankedPieces(playerMap, currentPlayer, position, 8));
+        flankedPieces.AddRange(AddFlankedPieces(playerMap, currentPlayer, position, -9));
+        flankedPieces.AddRange(AddFlankedPieces(playerMap, currentPlayer, position, 9));
+        flankedPieces.AddRange(AddFlankedPieces(playerMap, currentPlayer, position, -7));
+        flankedPieces.AddRange(AddFlankedPieces(playerMap, currentPlayer, position, 7));
 
         for (int i = 0; i < flankedPieces.Count; i++)
-            CaptureTile(currentPlayer, squares[flankedPieces[i]]);
+            CaptureTile(playerMap, currentPlayer, flankedPieces[i]);
     }
 
     public void FlipPiece(Player player, Piece piece)
     {
+        piece.player = player;
         piece.gameObject.transform.Rotate(180f, 0f, 0f);
     }
 
@@ -92,17 +95,17 @@ public class Board : MonoBehaviour {
             Destroy(squareObjects[i]);
     }
 
-    private List<int> AddFlankedPieces(Player currentPlayer, Square square, int direction)
+    private List<int> AddFlankedPieces(Player[] playerMap, Player currentPlayer, int position, int direction)
     {
         List<int> flankedPieces = new List<int>();
 
-        for (int i = square.position + direction; i >= 0 && i <= 63; i += direction)
+        for (int i = position + direction; i >= 0 && i <= 63; i += direction)
         {
             if (playerMap[i] != currentPlayer && playerMap[i] != Player.Nobody)
                 flankedPieces.Add(i);
             else if (playerMap[i] == currentPlayer)
                 break; // we have flanked everything we can in this direction
-            else if (playerMap[i] == Player.Nobody || IsPastBoardEdge(square, squares[i], direction))
+            else if (playerMap[i] == Player.Nobody || IsPastBoardEdge(position, i, direction))
             {
                 flankedPieces.Clear();
                 break; // nothing here can be flanked
@@ -132,6 +135,7 @@ public class Board : MonoBehaviour {
             newPiece = Instantiate(piecePrefab, piecePosition, Quaternion.identity) as Piece;
         else
             newPiece = Instantiate(piecePrefab, piecePosition, Quaternion.AngleAxis(180f, Vector3.right)) as Piece;
+        newPiece.player = playerMap[s.position];
         pieces.Add(s.position, newPiece);
     }
 
@@ -144,8 +148,6 @@ public class Board : MonoBehaviour {
         Square s = Instantiate(squarePrefab, squarePos, Quaternion.identity) as Square;
         s.gameObject.GetComponent<MeshRenderer>().enabled = false;
         s.position = position;
-        s.row = position % 8;
-        s.column = position / 8;
         s.isLegalMove = false;
 
         if (player != Player.Nobody)
@@ -178,7 +180,7 @@ public class Board : MonoBehaviour {
 
         for (int i = position + direction; i >= 0 && i <= 63; i += direction)
         {
-            if (IsPastBoardEdge(squares[position], squares[i], direction))
+            if (IsPastBoardEdge(position, position, direction))
                 return; // we can't go this way
             if (playerMap[i] != player && playerMap[i] != Player.Nobody)
                 flankablesExist = true;
@@ -191,10 +193,10 @@ public class Board : MonoBehaviour {
         }
     }
 
-    public bool IsPastBoardEdge(Square start, Square end, int direction)
+    public bool IsPastBoardEdge(int start, int end, int direction)
     {
-        if (direction > 0) return (start.row - end.row) > 0;
-        else return (start.row - end.row) < 0;
+        if (direction > 0) return ((start % 8) - (end % 8)) > 0;
+        else return ((start % 8) - (end % 8)) < 0;
     }
 
     public void ResetLegalMoves()

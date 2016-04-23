@@ -70,7 +70,7 @@ public class GameController : MonoBehaviour
             int clickedSquare = GetClickedSquare();
             if (clickedSquare > -1 && board.squares[clickedSquare].isLegalMove)
             {
-                MakeMove(board, ply, board.squares[clickedSquare]);
+                MakeMove(board, ply, clickedSquare);
                 SetPly(ai);
             }
         }
@@ -94,7 +94,7 @@ public class GameController : MonoBehaviour
             int clickedSquare = GetClickedSquare();
             if (clickedSquare > -1 && board.squares[clickedSquare].isLegalMove)
             {
-                MakeMove(board, ply, board.squares[clickedSquare]);
+                MakeMove(board, ply, clickedSquare);
                 SetPly(human);
             }
         }
@@ -145,12 +145,12 @@ public class GameController : MonoBehaviour
         }
     }
 
-    void MakeMove(Board board, Player ply, Square square)
+    void MakeMove(Board board, Player ply, int position)
     {
-        if (square.isLegalMove)
+        if (board.squares[position].isLegalMove)
         {
-            board.CaptureTile(ply, square);
-            board.FlankPieces(ply, square);
+            board.CaptureTile(board.playerMap, ply, position);
+            board.FlankPieces(board.playerMap, ply, position);
         }
     }
 
