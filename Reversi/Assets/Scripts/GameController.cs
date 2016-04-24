@@ -113,14 +113,21 @@ public class GameController : MonoBehaviour
 
     void UpdateSquareDisplays()
     {
-        List<int> legalMoves = GetLegalMoves(playerMap, ply);
-
-        for (int i = 0; i < 64; i++)
+        if (ply == human)
         {
-            if (legalMoves.Contains(i))
-                squares[i].gameObject.GetComponent<MeshRenderer>().enabled = true;
-            else
-                squares[i].gameObject.GetComponent<MeshRenderer>().enabled = false;
+            List<int> legalMoves = GetLegalMoves(playerMap, ply);
+
+            for (int i = 0; i < 64; i++)
+            {
+                if (legalMoves.Contains(i))
+                    squares[i].gameObject.GetComponent<MeshRenderer>().enabled = true;
+                else
+                    squares[i].gameObject.GetComponent<MeshRenderer>().enabled = false;
+            }
+        } else
+        {
+            foreach (Square square in squares)
+                square.gameObject.GetComponent<MeshRenderer>().enabled = false;
         }
     }
 
