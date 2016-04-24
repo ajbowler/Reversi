@@ -182,8 +182,8 @@ public class GameController : MonoBehaviour
     {
         MinimaxPair<Player[], double> moveToMake = Minimax(playerMap, difficulty, true);
         Player[] nextBoard = moveToMake.bestMove;
-
         int movePos = GetNextMove(playerMap, nextBoard);
+        yield return new WaitForSeconds(2);
         MakeMove(playerMap, ai, movePos);
         SetPly(human);
 
