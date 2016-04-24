@@ -196,7 +196,8 @@ public class GameController : MonoBehaviour
 
         while (ply == ai) yield return null;
 
-        // THIS IS FOR PIECE PLACEMENT TESTING
+        // COMMENT EVERYTHING ABOVE FOR A HUMAN VS. HUMAN GAME
+        // COMMENT EVERYTHING BELOW FOR A HUMAN VS. AI GAME
 
         //if (Input.GetMouseButtonUp(0))
         //{
@@ -242,12 +243,6 @@ public class GameController : MonoBehaviour
             gameOverCanvas.transform.position = new Vector3(1000, 0);
             mainMenuCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
         }
-    }
-
-    void MakeMove(Player[] map, Player currentPlayer, int position)
-    {
-        map[position] = currentPlayer;
-        FlankPieces(map, currentPlayer, position);
     }
 
     void SetPly(Player player)
@@ -305,20 +300,68 @@ public class GameController : MonoBehaviour
         }
     }
 
-    void FlankPieces(Player[] map, Player currentPlayer, int position)
+    void MakeMove(Player[] map, Player currentPlayer, int position)
+    {
+        map[position] = currentPlayer;
+        FlankPieces(map, currentPlayer, position);
+    }
+
+    void FlankPieces(Player[] map, Player currentPlayer, int startingPosition)
     {
         List<int> flankedPieces = new List<int>();
-        flankedPieces.AddRange(AddFlankedPieces(map, currentPlayer, position, -1));
-        flankedPieces.AddRange(AddFlankedPieces(map, currentPlayer, position, 1));
-        flankedPieces.AddRange(AddFlankedPieces(map, currentPlayer, position, -8));
-        flankedPieces.AddRange(AddFlankedPieces(map, currentPlayer, position, 8));
-        flankedPieces.AddRange(AddFlankedPieces(map, currentPlayer, position, -9));
-        flankedPieces.AddRange(AddFlankedPieces(map, currentPlayer, position, 9));
-        flankedPieces.AddRange(AddFlankedPieces(map, currentPlayer, position, -7));
-        flankedPieces.AddRange(AddFlankedPieces(map, currentPlayer, position, 7));
+        flankedPieces.AddRange(AddFlankedPieces(map, currentPlayer, startingPosition, -1));
+        flankedPieces.AddRange(AddFlankedPieces(map, currentPlayer, startingPosition, 1));
+        flankedPieces.AddRange(AddFlankedPieces(map, currentPlayer, startingPosition, -8));
+        flankedPieces.AddRange(AddFlankedPieces(map, currentPlayer, startingPosition, 8));
+        flankedPieces.AddRange(AddFlankedPieces(map, currentPlayer, startingPosition, -9));
+        flankedPieces.AddRange(AddFlankedPieces(map, currentPlayer, startingPosition, 9));
+        flankedPieces.AddRange(AddFlankedPieces(map, currentPlayer, startingPosition, -7));
+        flankedPieces.AddRange(AddFlankedPieces(map, currentPlayer, startingPosition, 7));
 
         for (int i = 0; i < flankedPieces.Count; i++)
             map[flankedPieces[i]] = currentPlayer;
+    }
+
+    List<int> AddFlankedPieces(Player[] playerMap, Player currentPlayer, int position, int direction)
+    {
+        List<int> flankedPieces = new List<int>();
+
+        for (int i = position + direction; i >= 0 && i <= 63; i += direction)
+        {
+            if (HasHitWall(i, direction) || playerMap[i] == Player.Nobody)
+            {
+                flankedPieces.Clear();
+                break;
+            }
+            else if (playerMap[i] != currentPlayer && playerMap[i] != Player.Nobody) flankedPieces.Add(i); // flank the other player
+            else if (playerMap[i] == currentPlayer) break; // we have flanked everything we can in this direction
+        }
+        return flankedPieces;
+    }
+
+    bool HasHitWall(int position, int direction)
+    {
+        switch (direction)
+        {
+            case -1:
+                return position / 8 == 0;
+            case 1:
+                return position / 8 == 7;
+            case -7:
+                return position % 8 == 0 || position / 8 == 7;
+            case 7:
+                return position % 8 == 7 || position / 8 == 0;
+            case -8:
+                return position % 8 == 0;
+            case 8:
+                return position % 8 == 7;
+            case -9:
+                return position % 8 == 0 || position / 8 == 0;
+            case 9:
+                return position % 8 == 7 || position / 8 == 7;
+            default:
+                return false;
+        }
     }
 
     void PlacePiece(int position)
@@ -337,13 +380,13 @@ public class GameController : MonoBehaviour
     void InitializeTile(int position, Player player)
     {
         playerMap[position] = player;
-
         Vector3 squarePos = DeterminePlacementCoordinates(position);
         squarePos.y += .2f;
         Square s = Instantiate(squarePrefab, squarePos, Quaternion.identity) as Square;
         s.gameObject.GetComponent<MeshRenderer>().enabled = false;
         s.position = position;
         squares[position] = s;
+
         if (player != Player.Nobody)
             PlacePiece(position);
     }
@@ -393,7 +436,7 @@ public class GameController : MonoBehaviour
 
         for (int i = position + direction; i >= 0 && i <= 63; i += direction)
         {
-            if (IsPastBoardEdge(position, position, direction))
+            if (HasHitWall(i, direction))
                 return -1; // we can't go this way
             if (map[i] != player && map[i] != Player.Nobody)
                 flankablesExist = true;
@@ -414,31 +457,6 @@ public class GameController : MonoBehaviour
         float z = col - 3.5f;
 
         return new Vector3(x, 1f, z);
-    }
-
-    List<int> AddFlankedPieces(Player[] playerMap, Player currentPlayer, int position, int direction)
-    {
-        List<int> flankedPieces = new List<int>();
-
-        for (int i = position + direction; i >= 0 && i <= 63; i += direction)
-        {
-            if (playerMap[i] != currentPlayer && playerMap[i] != Player.Nobody)
-                flankedPieces.Add(i);
-            else if (playerMap[i] == currentPlayer)
-                break; // we have flanked everything we can in this direction
-            else if (playerMap[i] == Player.Nobody || IsPastBoardEdge(position, i, direction))
-            {
-                flankedPieces.Clear();
-                break; // nothing here can be flanked
-            }
-        }
-        return flankedPieces;
-    }
-
-    bool IsPastBoardEdge(int start, int end, int direction)
-    {
-        if (direction > 0) return ((start % 8) - (end % 8)) > 0;
-        else return ((start % 8) - (end % 8)) < 0;
     }
 
     Player[] CopyPlayerMap(Player[] map)
