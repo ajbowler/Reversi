@@ -34,6 +34,8 @@ public class GameController : MonoBehaviour
     public Dictionary<int, Piece> pieces;
     public Piece piecePrefab;
     public Square squarePrefab;
+    public Canvas mainMenuCanvas;
+    public Canvas gameOverCanvas;
     public GameObject mainMenu;
     public GameObject gameOverMenu;
     public Text blackScoreText;
@@ -49,6 +51,7 @@ public class GameController : MonoBehaviour
     private int blackScore;
     private int whiteScore;
     private Player ply;
+    private string STATE = "MAIN MENU";
 
     void Start()
     {
@@ -60,8 +63,18 @@ public class GameController : MonoBehaviour
 
     void Update()
     {
-        if (mainMenu.activeSelf) UseMenu();
-        else StartCoroutine(PlayGame());
+        switch (STATE)
+        {
+            case "MAIN MENU":
+                MainMenu();
+                break;
+            case "PLAY GAME":
+                StartCoroutine(PlayGame());
+                break;
+            case "GAME OVER":
+                GameOver();
+                break;
+        }
     }
 
     void UpdateScore()
@@ -111,12 +124,13 @@ public class GameController : MonoBehaviour
         }
     }
 
-    void UseMenu()
+    void MainMenu()
     {
         board.gameObject.SetActive(false);
         if (Input.GetKeyUp(KeyCode.Return))
         {
-            mainMenu.SetActive(false);
+            mainMenuCanvas.renderMode = RenderMode.WorldSpace;
+            mainMenuCanvas.transform.position = new Vector3(1000f, 0f, 0f);
             difficulty = difficultySelector.value + 1;
             if (colorSelector.value == 0)
             {
@@ -132,13 +146,13 @@ public class GameController : MonoBehaviour
             blackScoreText.gameObject.SetActive(true);
             whiteScoreText.gameObject.SetActive(true);
             SetPly(Player.Black);
+            STATE = "PLAY GAME";
         }
     }
 
     IEnumerator PlayGame()
     {
-        if (GetLegalMoves(playerMap, ply).Count == 0)
-            GameOver();
+        if (GetLegalMoves(playerMap, ply).Count == 0) STATE = "GAME OVER";
         else
         {
             UpdatePieces();
@@ -204,6 +218,7 @@ public class GameController : MonoBehaviour
 
     void GameOver()
     {
+        gameOverCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
         Reset();
         board.gameObject.SetActive(false);
         if (blackScore > whiteScore)
@@ -213,11 +228,12 @@ public class GameController : MonoBehaviour
         else
             winnerText.text = "Tie!";
 
-        gameOverMenu.gameObject.SetActive(true);
         if (Input.GetKeyUp(KeyCode.R))
         {
-            mainMenu.gameObject.SetActive(true);
-            gameOverMenu.gameObject.SetActive(false);
+            STATE = "MAIN MENU";
+            gameOverCanvas.renderMode = RenderMode.WorldSpace;
+            gameOverCanvas.transform.position = new Vector3(1000, 0);
+            mainMenuCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
         }
     }
 
