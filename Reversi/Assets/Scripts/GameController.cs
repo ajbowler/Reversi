@@ -105,7 +105,7 @@ public class GameController : MonoBehaviour
                 else
                 {
                     if (pieces[i].player != playerMap[i])
-                        FlipPiece(playerMap[i], pieces[i]);
+                        pieces[i].player = playerMap[i];
                 }
             }
         }
@@ -189,8 +189,8 @@ public class GameController : MonoBehaviour
     {
         MinimaxPair<Player[], double> moveToMake = Minimax(playerMap, difficulty, true);
         Player[] nextBoard = moveToMake.bestMove;
+
         int movePos = GetNextMove(playerMap, nextBoard);
-        yield return new WaitForSeconds(2);
         MakeMove(playerMap, ai, movePos);
         SetPly(human);
 
@@ -389,12 +389,6 @@ public class GameController : MonoBehaviour
 
         if (player != Player.Nobody)
             PlacePiece(position);
-    }
-
-    void FlipPiece(Player player, Piece piece)
-    {
-        piece.player = player;
-        piece.gameObject.transform.Rotate(180f, 0f, 0f);
     }
 
     void Reset()
