@@ -125,10 +125,8 @@ public class GameController : MonoBehaviour
                     squares[i].gameObject.GetComponent<MeshRenderer>().enabled = false;
             }
         } else
-        {
             foreach (Square square in squares)
                 square.gameObject.GetComponent<MeshRenderer>().enabled = false;
-        }
     }
 
     void MainMenu()
@@ -159,7 +157,20 @@ public class GameController : MonoBehaviour
 
     IEnumerator PlayGame()
     {
-        if (GetLegalMoves(playerMap, ply).Count == 0) STATE = "GAME OVER";
+        if (GetLegalMoves(playerMap, ply).Count == 0)
+        {
+            Player currentPlayer = ply;
+            List<int> nextLegalMoves;
+            if (currentPlayer == Player.White) nextLegalMoves = GetLegalMoves(playerMap, Player.Black);
+            else nextLegalMoves = GetLegalMoves(playerMap, Player.White);
+
+            if (nextLegalMoves.Count == 0) STATE = "GAME OVER";
+            else
+            {
+                if (currentPlayer == Player.Black) SetPly(Player.White);
+                else SetPly(Player.Black);
+            }
+        }
         else
         {
             UpdatePieces();
