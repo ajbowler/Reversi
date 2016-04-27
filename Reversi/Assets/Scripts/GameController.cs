@@ -3,6 +3,9 @@ using System.Collections;
 using UnityEngine.UI;
 using System.Collections.Generic;
 
+/// <summary>
+/// The types of players a square can hold. If there isn't a piece on the square, it's "Nobody".
+/// </summary>
 public enum Player
 {
     Black,
@@ -10,6 +13,9 @@ public enum Player
     Nobody
 };
 
+/// <summary>
+/// An object holding a board state and a heuristic score, used by the Minimax algorithm.
+/// </summary>
 public class MinimaxPair<First, Second>
 {
     public First bestMove { get; set; }
@@ -27,6 +33,9 @@ public class MinimaxPair<First, Second>
     }
 }
 
+/// <summary>
+/// Holds all of the Reversi game logic
+/// </summary>
 public class GameController : MonoBehaviour
 {
     public Board board;
@@ -77,23 +86,28 @@ public class GameController : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Update the score of the game each frame
+    /// </summary>
     void UpdateScore()
     {
         blackScore = 0;
         whiteScore = 0;
         foreach (Player player in playerMap)
         {
-            if (player == Player.Black)
-                blackScore++;
-            else if (player == Player.White)
-                whiteScore++;
+            if (player == Player.Black) blackScore++;
+            else if (player == Player.White) whiteScore++;
         }
 
         blackScoreText.text = "Black: " + blackScore;
         whiteScoreText.text = "White: " + whiteScore;
     }
 
-    void UpdatePieces()
+    /// <summary>
+    /// Update the state of the board's pieces, changing their owners 
+    /// if captured and placing new ones if necessary this frame.
+    /// </summary>
+    void UpdatePieceStates()
     {
         for (int i = 0; i < 64; i++)
         {
@@ -111,6 +125,10 @@ public class GameController : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Update the square highlights after each frame, depending on the current player.
+    /// A square is only highlighted if it is a legal move for the human player(s).
+    /// </summary>
     void UpdateSquareDisplays()
     {
         if (ply == human)
@@ -129,6 +147,9 @@ public class GameController : MonoBehaviour
                 square.gameObject.GetComponent<MeshRenderer>().enabled = false;
     }
 
+    /// <summary>
+    /// Use the main menu GUI
+    /// </summary>
     void MainMenu()
     {
         board.gameObject.SetActive(false);
@@ -155,6 +176,9 @@ public class GameController : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Main game routine.
+    /// </summary>
     IEnumerator PlayGame()
     {
         if (GetLegalMoves(playerMap, ply).Count == 0)
@@ -173,7 +197,7 @@ public class GameController : MonoBehaviour
         }
         else
         {
-            UpdatePieces();
+            UpdatePieceStates();
             UpdateSquareDisplays();
             UpdateScore();
             if (ply == human) yield return StartCoroutine(HumanTurn());
@@ -181,6 +205,9 @@ public class GameController : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Executed when a human (1 or 2 per game) may take their turn.
+    /// </summary>
     IEnumerator HumanTurn()
     {
         if (Input.GetMouseButtonUp(0))
@@ -196,6 +223,9 @@ public class GameController : MonoBehaviour
         while (ply == human) yield return null;
     }
 
+    /// <summary>
+    /// Executed when it is the AI's turn if the AI is being used.
+    /// </summary>
     IEnumerator AITurn()
     {
         MinimaxPair<Player[], double> moveToMake = Minimax(playerMap, difficulty, true);
@@ -223,6 +253,10 @@ public class GameController : MonoBehaviour
         //while (ply == ai) yield return null;
     }
 
+    /// <summary>
+    /// Set the initial game board with 4 pieces in the middle.
+    /// Black always goes first.
+    /// </summary>
     void SetInitialBoard()
     {
         board.gameObject.SetActive(true);
@@ -234,18 +268,17 @@ public class GameController : MonoBehaviour
         }
     }
 
-
+    /// <summary>
+    /// Game Over GUI
+    /// </summary>
     void GameOver()
     {
         gameOverCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
         Reset();
         board.gameObject.SetActive(false);
-        if (blackScore > whiteScore)
-            winnerText.text = "Black Wins!";
-        else if (whiteScore > blackScore)
-            winnerText.text = "White Wins!";
-        else
-            winnerText.text = "Tie!";
+        if (blackScore > whiteScore) winnerText.text = "Black Wins!";
+        else if (whiteScore > blackScore) winnerText.text = "White Wins!";
+        else winnerText.text = "Tie!";
 
         if (Input.GetKeyUp(KeyCode.R))
         {
@@ -256,21 +289,27 @@ public class GameController : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Set the ply to the provided player
+    /// </summary>
     void SetPly(Player player)
     {
         ply = player;
-
-        // TODO add logic for skipping turns
     }
 
+    /// <summary>
+    /// Minimax algorithm for the AI.
+    /// </summary>
+    /// <param name="boardMap">A 64-indexed list of Players representing a board, where each square is a player.</param>
+    /// <param name="depth">The number of moves the AI will look ahead.</param>
+    /// <param name="maximizingPlayer">True if calculating own score, false if calculating opposing player's score.</param>
+    /// <returns>A MinimaxPair object containing the best board and its score</returns>
     MinimaxPair<Player[], double> Minimax(Player[] boardMap, int depth, bool maximizingPlayer)
     {
         Player[] gameTreeMap = CopyPlayerMap(boardMap);
         List<int> legalMoves;
-        if (maximizingPlayer)
-            legalMoves = GetLegalMoves(gameTreeMap, ai);
-        else
-            legalMoves = GetLegalMoves(gameTreeMap, human);
+        if (maximizingPlayer) legalMoves = GetLegalMoves(gameTreeMap, ai);
+        else legalMoves = GetLegalMoves(gameTreeMap, human);
 
         if (legalMoves.Count == 0 || depth == 0)
             return new MinimaxPair<Player[], double>(gameTreeMap, Evaluate(gameTreeMap));
@@ -311,12 +350,21 @@ public class GameController : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Make a move.
+    /// </summary>
+    /// <param name="map">A 64-indexed list of Players for each square, representing the board.</param>
+    /// <param name="currentPlayer">The player making the move</param>
+    /// <param name="position">The position of which the move is being made on.</param>
     void MakeMove(Player[] map, Player currentPlayer, int position)
     {
         map[position] = currentPlayer;
         FlankPieces(map, currentPlayer, position);
     }
 
+    /// <summary>
+    /// Flanks all possible pieces from a starting position
+    /// </summary>
     void FlankPieces(Player[] map, Player currentPlayer, int startingPosition)
     {
         List<int> flankedPieces = new List<int>();
@@ -333,6 +381,22 @@ public class GameController : MonoBehaviour
             map[flankedPieces[i]] = currentPlayer;
     }
 
+    /// <summary>
+    /// Flanks all pieces in a given direction. 
+    /// Helper method to the above FlankPieces method.
+    /// </summary>
+    /// <param name="direction">
+    ///     The number of squares it takes to get to the next tile in the 
+    ///     cardinal direction in a one-dimensional board representation.
+    ///     -9 = NW
+    ///     -8 = N
+    ///     -7 = NE
+    ///     -1 = W
+    ///     1 = E
+    ///     7 = SW
+    ///     8 = S
+    ///     9 = SE
+    /// </param>
     List<int> AddFlankedPieces(Player[] playerMap, Player currentPlayer, int position, int direction)
     {
         List<int> flankedPieces = new List<int>();
@@ -350,6 +414,9 @@ public class GameController : MonoBehaviour
         return flankedPieces;
     }
 
+    /// <summary>
+    /// Given a position and direction, check if the position touches the wall.
+    /// </summary>
     bool HasHitWall(int position, int direction)
     {
         switch (direction)
@@ -375,6 +442,9 @@ public class GameController : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Place a new piece at the given position with the global current ply
+    /// </summary>
     void PlacePiece(int position)
     {
         Vector3 piecePosition = squares[position].transform.position;
@@ -388,6 +458,10 @@ public class GameController : MonoBehaviour
         pieces.Add(squares[position].position, newPiece);
     }
 
+    /// <summary>
+    /// Initialize the board tile at the current position with the current player.
+    /// Used at the beginning of the game.
+    /// </summary>
     void InitializeTile(int position, Player player)
     {
         playerMap[position] = player;
@@ -398,10 +472,12 @@ public class GameController : MonoBehaviour
         s.position = position;
         squares[position] = s;
 
-        if (player != Player.Nobody)
-            PlacePiece(position);
+        if (player != Player.Nobody) PlacePiece(position);
     }
 
+    /// <summary>
+    /// Reset the board to an pre-game state.
+    /// </summary>
     void Reset()
     {
         squares = new Square[64];
@@ -415,6 +491,10 @@ public class GameController : MonoBehaviour
             Destroy(squareObjects[i]);
     }
 
+    /// <summary>
+    /// Get all the legal moves on the board given a 
+    /// one dimensional board representation and the current player.
+    /// </summary>
     List<int> GetLegalMoves(Player[] map, Player currentPlayer)
     {
         List<int> legalMoves = new List<int>();
@@ -427,43 +507,51 @@ public class GameController : MonoBehaviour
                 foreach (int direction in directions)
                 {
                     int legalMove = AddLegalMove(map, currentPlayer, start, direction);
-                    if (legalMove != -1)
-                        legalMoves.Add(legalMove);
+                    if (legalMove != -1) legalMoves.Add(legalMove);
                 }
             }
         }
         return legalMoves;
     }
 
+    /// <summary>
+    /// Return the position of a legal move given the current player, 
+    /// starting position, and the direction. If no legal move is 
+    /// available from this position, return -1.
+    /// </summary>
     int AddLegalMove(Player[] map, Player player, int position, int direction)
     {
         bool flankablesExist = false;
 
         for (int i = position + direction; i >= 0 && i <= 63; i += direction)
         {
-            if (HasHitWall(i, direction))
-                return -1; // we can't go this way
-            if (map[i] != player && map[i] != Player.Nobody)
-                flankablesExist = true;
-            else if (map[i] == Player.Nobody && flankablesExist)
-                return i; // found a legal move
+            if (HasHitWall(i, direction)) return -1; // we can't go this way
+            if (map[i] != player && map[i] != Player.Nobody) flankablesExist = true; // keep going
+            else if (map[i] == Player.Nobody && flankablesExist) return i; // found a legal move
             else return -1; // we can't go this way
         }
-
-        return -1;
+        return -1; // shouldn't happen
     }
 
+    /// <summary>
+    /// Return the position to place a square or piece at, 
+    /// based on the board and piece game models.
+    /// </summary>
     Vector3 DeterminePlacementCoordinates(int position)
     {
         int row = position / 8;
         int col = position % 8;
 
+        // 3.5 is the width/height of the board model.
         float x = row - 3.5f;
         float z = col - 3.5f;
 
         return new Vector3(x, 1f, z);
     }
 
+    /// <summary>
+    /// Deep copy a one dimensional board representation.
+    /// </summary>
     Player[] CopyPlayerMap(Player[] map)
     {
         Player[] newMap = new Player[64];
@@ -480,6 +568,9 @@ public class GameController : MonoBehaviour
         return newMap;
     }
 
+    /// <summary>
+    /// Return -1 if a square was not clicked, else return the clicked square's position.
+    /// </summary>
     int GetClickedSquare()
     {
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
@@ -493,59 +584,71 @@ public class GameController : MonoBehaviour
         else return -1;
     }
 
+    /// <summary>
+    /// Static evaluation function for Minimax of a given board representation
+    /// </summary>
     double Evaluate(Player[] boardMap)
     {
         double score = 0.0f;
         score += GetCornerScore(boardMap);
-        score += GetEdgeScore(boardMap);
+        score += GetWallScore(boardMap);
         score += GetPieceCountScore(boardMap);
         return score;
     }
 
+    /// <summary>
+    /// Corners are worth the most points.
+    /// </summary>
     double GetCornerScore(Player[] boardMap)
     {
         int[] corners = new int[4] { 0, 7, 56, 63 };
         double score = 0.0f;
         foreach (int corner in corners)
         {
-            if (boardMap[corner] == ai)
-                score++;
-            else if (boardMap[corner] == human)
-                score--;
+            if (boardMap[corner] == ai) score++;
+            else if (boardMap[corner] == human) score--;
         }
         return score * 20;
     }
 
-    double GetEdgeScore(Player[] boardMap)
+    /// <summary>
+    /// Wall (and corner by extension) squares are still quite powerful.
+    /// </summary>
+    double GetWallScore(Player[] boardMap)
     {
         double score = 0.0f;
         for (int i = 0; i < 64; i++)
         {
             if (i % 8 == 0 || i % 8 == 7 || i / 8 == 0 || i / 8 == 7)
             {
-                if (boardMap[i] == ai)
-                    score++;
-                else if (boardMap[i] == human)
-                    score--;
+                if (boardMap[i] == ai) score++;
+                else if (boardMap[i] == human) score--;
             }
         }
         return score * 10;
     }
 
+
+    /// <summary>
+    /// Final overall score by simply counting all of the pieces. 
+    /// Corner pieces are therefore counted 3 times, and wall pieces twice.
+    /// </summary>
     double GetPieceCountScore(Player[] boardMap)
     {
         double score = 0.0f;
 
         for (int i = 0; i < 64; i++)
         {
-            if (boardMap[i] == ai)
-                score++;
-            else if (boardMap[i] == human)
-                score--;
+            if (boardMap[i] == ai) score++;
+            else if (boardMap[i] == human) score--;
         }
         return score;
     }
 
+    /// <summary>
+    /// Finds the different board tile between the current "real" board 
+    /// and the Minimax board. That different tile is the AI's next move.
+    /// </summary>
     int GetNextMove(Player[] currentBoardMap, Player[] nextBoardMap)
     {
         for (int i = 0; i < 64; i++)
